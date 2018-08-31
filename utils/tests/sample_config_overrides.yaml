@@ -1,0 +1,8 @@
+name: my-cluster-name
+addons:
+  - name: test
+    overrides:
+      - target: "override-target-1"
+        value: "unittest-value-1"
+      - target: "override-target-2"
+        value: "unittest-value-2"

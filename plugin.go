@@ -11,6 +11,7 @@ import (
 	"github.com/target/helm-propeller/constants"
 	"github.com/target/helm-propeller/types"
 	"github.com/target/helm-propeller/utils"
+	"github.com/target/helm-propeller/utils/commandbuilder"
 )
 
 const (
@@ -59,8 +60,39 @@ func (p *Plugin) Exec() error {
 
 func (p *Plugin) addHelmRepo(repo types.HelmRepo) error {
 	log.Println("Adding Helm repo:", repo.Name)
-	cmd := exec.Command(constants.HelmBin, "repo", "add", repo.Name, repo.URL)
-	if err := utils.Run(cmd, true); err != nil {
+	cb := commandbuilder.CommandBuilder{Name: constants.HelmBin}
+	cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: "repo"})
+	cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: "add"})
+	cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: repo.Name})
+	cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: repo.URL})
+
+	if repo.Username != nil {
+		username, err := repo.Username.GetValue()
+		if err != nil {
+			return fmt.Errorf("Could not get username for repo: %v", err)
+		}
+		cb.Add(commandbuilder.Arg{
+			Type:        commandbuilder.ArgTypeLongParam,
+			Name:        "username",
+			Value:       username,
+			ValueSecret: true,
+		})
+	}
+
+	if repo.Password != nil {
+		password, err := repo.Password.GetValue()
+		if err != nil {
+			return fmt.Errorf("Could not get password for repo: %v", err)
+		}
+		cb.Add(commandbuilder.Arg{
+			Type:        commandbuilder.ArgTypeLongParam,
+			Name:        "password",
+			Value:       password,
+			ValueSecret: true,
+		})
+	}
+
+	if err := cb.Run(); err != nil {
 		return fmt.Errorf("Could not add repo \"%s\": %v", repo.Name, err)
 	}
 	return nil
@@ -178,10 +210,15 @@ func (p *Plugin) overrides(addon *types.ClusterAddon) []string {
 	setValues := []string{}
 	for _, override := range addon.Overrides {
 		log.Println("Overriding value for:", override.Target)
-		if os.Getenv(override.Source) == "" {
+		overrideValue, err := override.GetValue()
+		if err != nil {
+			log.Println("WARNING: Could not get override value. Skipping override:", err)
+			continue
+		}
+		if overrideValue == "" {
 			log.Println("WARNING: Override value is blank.")
 		}
-		setValues = append(setValues, fmt.Sprintf("%s=%s", override.Target, os.Getenv(override.Source)))
+		setValues = append(setValues, fmt.Sprintf("%s=%s", override.Target, overrideValue))
 	}
 	if len(setValues) > 0 {
 		args = append(args, "--set", strings.Join(setValues, ","))
