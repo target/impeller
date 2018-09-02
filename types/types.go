@@ -6,9 +6,9 @@ import (
 )
 
 type ClusterConfig struct {
-	Name   string         `yaml:"name"`
-	Addons []ClusterAddon `yaml:"addons"`
-	Helm   HelmConfig     `yaml:"helm"`
+	Name     string     `yaml:"name"`
+	Releases []Release  `yaml:"releases"`
+	Helm     HelmConfig `yaml:"helm"`
 }
 
 type HelmRepo struct {
@@ -18,7 +18,7 @@ type HelmRepo struct {
 	Password *Value `yaml:"password,omitempty"`
 }
 
-type ClusterAddon struct {
+type Release struct {
 	Name       string     `yaml:"name"`
 	Version    string     `yaml:"version"`
 	ChartPath  string     `yaml:"chartPath"`

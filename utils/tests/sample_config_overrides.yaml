@@ -1,5 +1,5 @@
 name: my-cluster-name
-addons:
+releases:
   - name: test
     overrides:
       - target: "override-target-1"

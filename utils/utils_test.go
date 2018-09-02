@@ -26,7 +26,7 @@ func TestReadConfigWithChartOverrides(t *testing.T) {
 	config, err := ReadClusterConfig("./tests/sample_config_overrides.yaml")
 	require.Nil(t, err)
 
-	overrides := config.Addons[0].Overrides
+	overrides := config.Releases[0].Overrides
 	overrideValue, err := overrides[0].GetValue()
 	require.Nil(t, err)
 	assert.Equal(t, "unittest-value-1", overrideValue)

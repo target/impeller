@@ -49,7 +49,7 @@ func (p *Plugin) Exec() error {
 	}
 
 	// Install addons
-	for _, addon := range p.ClusterConfig.Addons {
+	for _, addon := range p.ClusterConfig.Releases {
 		if err := p.installAddon(&addon); err != nil {
 			return fmt.Errorf("Error installing addon \"%s\": %v", addon.Name, err)
 		}
@@ -107,24 +107,24 @@ func (p *Plugin) updateHelmRepos() error {
 	return nil
 }
 
-func (p *Plugin) installAddon(addon *types.ClusterAddon) error {
-	log.Println("Installing addon:", addon.Name, "@", addon.Version)
-	args := []string{constants.HelmBin, "upgrade", "--install", addon.Name, addon.ChartPath, "--version", addon.Version}
+func (p *Plugin) installAddon(release *types.Release) error {
+	log.Println("Installing addon:", release.Name, "@", release.Version)
+	args := []string{constants.HelmBin, "upgrade", "--install", release.Name, release.ChartPath, "--version", release.Version}
 
 	// Add namespaces to command
-	if addon.Namespace != "" {
-		args = append(args, "--namespace", strings.TrimSpace(addon.Namespace))
+	if release.Namespace != "" {
+		args = append(args, "--namespace", strings.TrimSpace(release.Namespace))
 	}
 	if p.ClusterConfig.Helm.Namespace != "" {
 		args = append(args, "--tiller-namespace", p.ClusterConfig.Helm.Namespace)
 	}
 
 	// Add Overrides
-	args = append(args, p.overrides(addon)...)
+	args = append(args, p.overrides(release)...)
 
 	// Dry Run
 	if p.Dryrun {
-		log.Println("Running Dry run:", addon.Name)
+		log.Println("Running Dry run:", release.Name)
 		args = append(args, "--dry-run")
 	}
 
@@ -179,7 +179,7 @@ func (p *Plugin) helmInit() error {
 	return utils.PollTiller(10, p.ClusterConfig.Helm.Namespace)
 }
 
-func (p *Plugin) overrides(addon *types.ClusterAddon) []string {
+func (p *Plugin) overrides(release *types.Release) []string {
 	args := []string{}
 
 	// Add override files
@@ -187,12 +187,12 @@ func (p *Plugin) overrides(addon *types.ClusterAddon) []string {
 		log.Println("Adding override file:", fileName)
 		args = append(args, "-f", strings.TrimSpace(fileName))
 	}
-	path := fmt.Sprintf("values/%s/default.yaml", addon.Name)
+	path := fmt.Sprintf("values/%s/default.yaml", release.Name)
 	if _, err := os.Stat(path); err == nil {
 		log.Println("Adding override file:", path)
 		args = append(args, "-f", path)
 	}
-	for _, path := range addon.ValueFiles {
+	for _, path := range release.ValueFiles {
 		if _, err := os.Stat(path); err != nil {
 			log.Println("WARN: Value file does not exist:", path)
 			continue
@@ -200,7 +200,7 @@ func (p *Plugin) overrides(addon *types.ClusterAddon) []string {
 		log.Println("Adding override file:", path)
 		args = append(args, "-f", path)
 	}
-	path = fmt.Sprintf("values/%s/%s.yaml", addon.Name, p.ClusterConfig.Name)
+	path = fmt.Sprintf("values/%s/%s.yaml", release.Name, p.ClusterConfig.Name)
 	if _, err := os.Stat(path); p.ClusterConfig.Name != "" && err == nil {
 		log.Println("Adding override file:", path)
 		args = append(args, "-f", path)
@@ -208,7 +208,7 @@ func (p *Plugin) overrides(addon *types.ClusterAddon) []string {
 
 	// Handle individual value overrides
 	setValues := []string{}
-	for _, override := range addon.Overrides {
+	for _, override := range release.Overrides {
 		log.Println("Overriding value for:", override.Target)
 		overrideValue, err := override.GetValue()
 		if err != nil {

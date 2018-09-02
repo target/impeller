@@ -26,7 +26,7 @@ Manages Helm charts running in Kubernetes clusters.
 This example Drone pipeline shows how to manage a single clusters. Updates are automatically deployed on a push/merge to master.
 
 ```yaml
-deploy-addons:
+deploy-charts:
   when:
     event: push
     branch: master
@@ -54,7 +54,7 @@ matrix:
       stage: test
 
 pipeline:
-  deploy-addons-prod:
+  deploy-charts-prod:
     when:
       event: deployment
       matrix:
@@ -67,7 +67,7 @@ pipeline:
       - source: my-kube-config-drone-secret
         target: KUBE_CONFIG
 
-  deploy-addons-test:
+  deploy-charts-test:
     when:
       event: push
       branch: master
@@ -81,16 +81,16 @@ pipeline:
 
 ## Files and Directory Layout
 ```
- addons/
+ chart-configs/
  |- clusters/
     |- my-cluster-name.yaml
     |- my-other-cluster-name.yaml
  |- values/
-    |- cluster-autoscaler/            # the release name of the addon
+    |- cluster-autoscaler/            # the release name from your cluster file
        |- default.yaml                # overrides for all clusters
        |- my-cluster-name.yaml        # overrides for a specific cluster
        |- my-other-cluster-name.yaml
-    |- my-addon/
+    |- my-chart/
        |- default.yaml
 ```
 
@@ -104,18 +104,18 @@ helm:
       url: https://kubernetes-charts.storage.googleapis.com/
     - name: private-repo
       url: https://example.com/my-private-repo/
-addons:
+releases:
   - name: cluster-autoscaler  # Specify the release name
     namespace: kube-system  # Specify the namespace where to install
     version: 0.7.0  # Specify the version of the chart to install
     chartPath: stable/cluster-autoscaler
-  - name: my-addon
+  - name: my-chart
     namespace: kube-system
     version: ~1.x  # Supports the same syntax as Helm's --version flag
-    chartPath: private-repo/my-addon
+    chartPath: private-repo/my-chart
 ```
 
-values/my-addon/default.yaml:
+values/my-chart/default.yaml:
 ```yaml
 # Place any overrides here, just as you would with Helm.
 # This file will be passed as an override to Helm.
