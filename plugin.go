@@ -144,8 +144,10 @@ func (p *Plugin) installAddon(release *types.Release) error {
 
 func (p *Plugin) setupKubeconfig() error {
 	log.Println("Creating Kubernetes config")
-	if err := ioutil.WriteFile(kubeConfig, []byte(p.KubeConfig), 0644); err != nil {
-		return fmt.Errorf("Error creating kube config file: %v", err)
+	if p.KubeConfig != "" {
+		if err := ioutil.WriteFile(kubeConfig, []byte(p.KubeConfig), 0644); err != nil {
+			return fmt.Errorf("Error creating kube config file: %v", err)
+		}
 	}
 	cmd := exec.Command(kubectlBin, "config", "use-context", p.KubeContext)
 	if err := utils.Run(cmd, true); err != nil {
