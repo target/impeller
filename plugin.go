@@ -126,7 +126,7 @@ func (p *Plugin) installAddon(release *types.Release) error {
 
 	// Add Overrides
 	for _, override := range p.overrides(release) {
-		cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: override})
+		cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: override, ValueSecret: true})
 	}
 
 	// Dry Run
