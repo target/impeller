@@ -109,28 +109,34 @@ func (p *Plugin) updateHelmRepos() error {
 
 func (p *Plugin) installAddon(release *types.Release) error {
 	log.Println("Installing addon:", release.Name, "@", release.Version)
-	args := []string{constants.HelmBin, "upgrade", "--install", release.Name, release.ChartPath, "--version", release.Version}
+	cb := commandbuilder.CommandBuilder{Name: constants.HelmBin}
+	cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: "upgrade"})
+	cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: "--install"})
+	cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: release.Name})
+	cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: release.ChartPath})
+	cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeLongParam, Name: "version", Value: release.Version})
 
 	// Add namespaces to command
 	if release.Namespace != "" {
-		args = append(args, "--namespace", strings.TrimSpace(release.Namespace))
+		cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeLongParam, Name: "namespace", Value: release.Namespace})
 	}
 	if p.ClusterConfig.Helm.Namespace != "" {
-		args = append(args, "--tiller-namespace", p.ClusterConfig.Helm.Namespace)
+		cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeLongParam, Name: "tiller-namespace", Value: p.ClusterConfig.Helm.Namespace})
 	}
 
 	// Add Overrides
-	args = append(args, p.overrides(release)...)
+	for _, override := range p.overrides(release) {
+		cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: override})
+	}
 
 	// Dry Run
 	if p.Dryrun {
 		log.Println("Running Dry run:", release.Name)
-		args = append(args, "--dry-run")
+		cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: "--dry-run"})
 	}
 
 	// Execute helm upgrade
-	cmd := exec.Command("/bin/sh", "-c", strings.Join(args, " "))
-	if err := utils.Run(cmd, false); err != nil {
+	if err := cb.Run(); err != nil {
 		return fmt.Errorf("Error running helm: %v", err)
 	}
 	return nil

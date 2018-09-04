@@ -28,7 +28,6 @@ type Release struct {
 }
 
 type Override struct {
-	//Source string `yaml:"source"`
 	Value  `yaml:",inline"`
 	Target string `yaml:"target"`
 }
