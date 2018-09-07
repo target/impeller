@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 
 	"github.com/target/helm-propeller/constants"
@@ -160,8 +161,8 @@ func (p *Plugin) helmInit() error {
 	log.Println("Initializing Helm")
 	cmd := []string{"init", "--debug"}
 
-	if !(p.ClusterConfig.Helm.DisableHistory) {
-		cmd = append(cmd, "--history-max", "5")
+	if p.ClusterConfig.Helm.MaxHistory > 0 {
+		cmd = append(cmd, "--history-max", strconv.Itoa(p.ClusterConfig.Helm.MaxHistory))
 	}
 	if p.ClusterConfig.Helm.Upgrade {
 		cmd = append(cmd, "--upgrade")

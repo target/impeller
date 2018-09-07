@@ -33,11 +33,11 @@ type Override struct {
 }
 
 type HelmConfig struct {
-	Upgrade        bool              `yaml:"upgrade"`
-	DisableHistory bool              `yaml:"disableHistory"`
-	Namespace      string            `yaml:"namespace"`
-	Repos          []HelmRepo        `yaml:"repos"`
-	Overrides      map[string]string `yaml:"overrides"`
+	Upgrade    bool              `yaml:"upgrade"`
+	MaxHistory int               `yaml:"maxHistory"`
+	Namespace  string            `yaml:"namespace"`
+	Repos      []HelmRepo        `yaml:"repos"`
+	Overrides  map[string]string `yaml:"overrides"`
 }
 
 type Value struct {
