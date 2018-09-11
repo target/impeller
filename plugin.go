@@ -127,7 +127,7 @@ func (p *Plugin) installAddon(release *types.Release) error {
 
 	// Add Overrides
 	for _, override := range p.overrides(release) {
-		cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: override, ValueSecret: true})
+		cb.Add(override)
 	}
 
 	// Dry Run
@@ -188,18 +188,22 @@ func (p *Plugin) helmInit() error {
 	return utils.PollTiller(10, p.ClusterConfig.Helm.Namespace)
 }
 
-func (p *Plugin) overrides(release *types.Release) []string {
-	args := []string{}
-
+func (p *Plugin) overrides(release *types.Release) (args []commandbuilder.Arg) {
 	// Add override files
 	for _, fileName := range p.ValueFiles {
 		log.Println("Adding override file:", fileName)
-		args = append(args, "-f", strings.TrimSpace(fileName))
+		args = append(args, commandbuilder.Arg{
+			Type:  commandbuilder.ArgTypeShortParam,
+			Name:  "f",
+			Value: strings.TrimSpace(fileName)})
 	}
 	path := fmt.Sprintf("values/%s/default.yaml", release.Name)
 	if _, err := os.Stat(path); err == nil {
 		log.Println("Adding override file:", path)
-		args = append(args, "-f", path)
+		args = append(args, commandbuilder.Arg{
+			Type:  commandbuilder.ArgTypeShortParam,
+			Name:  "f",
+			Value: path})
 	}
 	for _, path := range release.ValueFiles {
 		if _, err := os.Stat(path); err != nil {
@@ -207,12 +211,18 @@ func (p *Plugin) overrides(release *types.Release) []string {
 			continue
 		}
 		log.Println("Adding override file:", path)
-		args = append(args, "-f", path)
+		args = append(args, commandbuilder.Arg{
+			Type:  commandbuilder.ArgTypeShortParam,
+			Name:  "f",
+			Value: path})
 	}
 	path = fmt.Sprintf("values/%s/%s.yaml", release.Name, p.ClusterConfig.Name)
 	if _, err := os.Stat(path); p.ClusterConfig.Name != "" && err == nil {
 		log.Println("Adding override file:", path)
-		args = append(args, "-f", path)
+		args = append(args, commandbuilder.Arg{
+			Type:  commandbuilder.ArgTypeShortParam,
+			Name:  "f",
+			Value: path})
 	}
 
 	// Handle individual value overrides
@@ -230,7 +240,11 @@ func (p *Plugin) overrides(release *types.Release) []string {
 		setValues = append(setValues, fmt.Sprintf("%s=%s", override.Target, overrideValue))
 	}
 	if len(setValues) > 0 {
-		args = append(args, "--set", strings.Join(setValues, ","))
+		args = append(args, commandbuilder.Arg{
+			Type:        commandbuilder.ArgTypeLongParam,
+			Name:        "set",
+			Value:       strings.Join(setValues, ","),
+			ValueSecret: true})
 	}
 	return args
 }
