@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/target/helm-propeller/types"
+	"github.com/target/impeller/types"
 )
 
 func TestOverridesValueFiles(t *testing.T) {

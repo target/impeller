@@ -9,10 +9,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/target/helm-propeller/constants"
-	"github.com/target/helm-propeller/types"
-	"github.com/target/helm-propeller/utils"
-	"github.com/target/helm-propeller/utils/commandbuilder"
+	"github.com/target/impeller/constants"
+	"github.com/target/impeller/types"
+	"github.com/target/impeller/utils"
+	"github.com/target/impeller/utils/commandbuilder"
 )
 
 const (

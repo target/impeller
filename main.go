@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/target/helm-propeller/utils"
+	"github.com/target/impeller/utils"
 	"github.com/urfave/cli"
 )
 

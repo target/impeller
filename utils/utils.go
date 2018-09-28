@@ -7,8 +7,8 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/target/helm-propeller/constants"
-	"github.com/target/helm-propeller/types"
+	"github.com/target/impeller/constants"
+	"github.com/target/impeller/types"
 	yaml "gopkg.in/yaml.v2"
 )
 

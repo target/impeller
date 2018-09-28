@@ -1,4 +1,4 @@
-# propeller
+# impeller
 
 Manages Helm charts running in Kubernetes clusters.
 
@@ -19,7 +19,7 @@ Manages Helm charts running in Kubernetes clusters.
 
 ## How to use
 ### Command line
-`propeller --cluster-config-path=./clusters/my-cluster.yaml --kube-config="$(cat ~/.kube/config)" --kube-context my-kubernetes-context`
+`impeller --cluster-config-path=./clusters/my-cluster.yaml --kube-config="$(cat ~/.kube/config)" --kube-context my-kubernetes-context`
 
 ### Drone pipeline
 #### Simple example

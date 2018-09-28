@@ -11,5 +11,5 @@ RUN cd /tmp && \
 RUN wget -O /usr/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl && \
     chmod +x /usr/bin/kubectl
 RUN mkdir /root/.kube
-ENTRYPOINT ["/usr/bin/propeller"]
-COPY helm-propeller /usr/bin/propeller
+ENTRYPOINT ["/usr/bin/impeller"]
+COPY impeller /usr/bin/impeller
