@@ -1,3 +1,10 @@
+FROM golang:1.11-alpine as builder
+WORKDIR /go/src/github.com/target/impeller
+COPY . .
+RUN apk add --no-cache git && \
+    go get -d ./... && \
+    go build
+
 FROM alpine:3.8
 ENV HELM_VERSION=v2.10.0
 ENV KUBECTL_VERSION=v1.11.0
@@ -12,4 +19,4 @@ RUN wget -O /usr/bin/kubectl https://storage.googleapis.com/kubernetes-release/r
     chmod +x /usr/bin/kubectl
 RUN mkdir /root/.kube
 ENTRYPOINT ["/usr/bin/impeller"]
-COPY impeller /usr/bin/impeller
+COPY --from=builder /go/src/github.com/target/impeller/impeller /usr/bin/impeller
