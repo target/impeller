@@ -6,7 +6,7 @@ RUN apk add --no-cache git && \
     go build
 
 FROM alpine:3.8
-ENV HELM_VERSION=v2.10.0
+ENV HELM_VERSION=v2.12.3
 ENV KUBECTL_VERSION=v1.11.0
 
 RUN cd /tmp && \
