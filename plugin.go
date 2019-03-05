@@ -166,6 +166,7 @@ func (p *Plugin) helmInit() error {
 	}
 	if p.ClusterConfig.Helm.Upgrade {
 		cmd = append(cmd, "--upgrade")
+		cmd = append(cmd, "--force-upgrade")
 	}
 	if p.ClusterConfig.Helm.Namespace != "" {
 		cmd = append(cmd, "--tiller-namespace", p.ClusterConfig.Helm.Namespace)
