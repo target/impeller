@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -26,6 +27,7 @@ type Plugin struct {
 	KubeConfig    string
 	KubeContext   string
 	Dryrun        bool
+	helmInited    bool // Indication of helm initialization
 }
 
 func (p *Plugin) Exec() error {
@@ -35,7 +37,8 @@ func (p *Plugin) Exec() error {
 	}
 
 	// Helm init
-	if err := p.helmInit(); err != nil {
+	clientOnly := true
+	if err := p.helmInit(clientOnly); err != nil {
 		return fmt.Errorf("Error initializing Helm: %v", err)
 	}
 
@@ -110,6 +113,23 @@ func (p *Plugin) updateHelmRepos() error {
 
 func (p *Plugin) installAddon(release *types.Release) error {
 	log.Println("Installing addon:", release.Name, "@", release.Version)
+	if release.Deployment == "kubectl" {
+		return p.installKubectlAddon(release)
+	} else if release.Deployment == "helm" {
+		if !p.helmInited {
+			clientOnly := false // defined purely for readability
+			err := p.helmInit(clientOnly)
+			if err != nil {
+				return err
+			}
+			p.helmInited = true
+		}
+		return p.installHelmAddon(release)
+	}
+	return fmt.Errorf("unsupported deployment type: %s", release.Deployment)
+}
+
+func (p *Plugin) installHelmAddon(release *types.Release) error {
 	cb := commandbuilder.CommandBuilder{Name: constants.HelmBin}
 	cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: "upgrade"})
 	cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: "--install"})
@@ -143,6 +163,75 @@ func (p *Plugin) installAddon(release *types.Release) error {
 	return nil
 }
 
+func (p *Plugin) installKubectlAddon(release *types.Release) error {
+	if err := p.fetchChart(release); err != nil {
+		return fmt.Errorf("error fetching chart for kubectl deployment: %s", err)
+	}
+
+	renderedManifests, err := p.templateChart(release)
+	if err != nil {
+		return fmt.Errorf("error rendering chart for kubectl apply: %s", err)
+	}
+
+	// Dry Run
+	if p.Dryrun {
+		log.Println("Running Dry run:", release.Name)
+		fmt.Printf("rendered chart output:\n%s", renderedManifests)
+		return nil
+	}
+
+	cb := commandbuilder.CommandBuilder{Name: constants.KubectlBin}
+	// kubectl apply -f -
+	cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: "apply"})
+	cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeLongParam, Name: "filename", Value: "-"})
+
+	// Grab raw commandbuilder command so we can set stdin
+	kubectlApplyCmd := cb.Command()
+	kubectlApplyCmd.Stdin = strings.NewReader(renderedManifests)
+	// We may need to run kubectl apply -f - twice if the helm chart
+	// has dependant kubernetes resources. The first run will install
+	// independent components and the second run will install the ones
+	// that failed previously. If this command fails twice then the chart
+	// is just broken
+	if err := utils.Run(kubectlApplyCmd, false); err != nil {
+		kubectlApplyCmd := cb.Command()
+		kubectlApplyCmd.Stdin = strings.NewReader(renderedManifests)
+		return utils.Run(kubectlApplyCmd, false)
+	}
+	return nil
+}
+
+func (p *Plugin) fetchChart(release *types.Release) error {
+	cb := commandbuilder.CommandBuilder{Name: constants.HelmBin}
+	cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: "fetch"})
+	cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeLongParam, Name: "version", Value: release.Version})
+	cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: "--untar"})
+	cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: release.ChartPath})
+	return cb.Run()
+}
+
+func (p *Plugin) templateChart(release *types.Release) (string, error) {
+	chartDir := filepath.Base(release.ChartPath)
+	cb := commandbuilder.CommandBuilder{Name: constants.HelmBin}
+	cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: "template"})
+	if release.Namespace != "" {
+		cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeLongParam, Name: "namespace", Value: release.Namespace})
+	}
+	if release.Name != "" {
+		cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeLongParam, Name: "name", Value: release.Name})
+	}
+	for _, override := range p.overrides(release) {
+		cb.Add(override)
+	}
+	cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: chartDir})
+	cmd := cb.Command()
+	templateBytes, err := cmd.Output()
+	if err != nil {
+		return "", err
+	}
+	return string(templateBytes), nil
+}
+
 func (p *Plugin) setupKubeconfig() error {
 	log.Println("Creating Kubernetes config")
 	if p.KubeConfig != "" {
@@ -157,20 +246,14 @@ func (p *Plugin) setupKubeconfig() error {
 	return nil
 }
 
-func (p *Plugin) helmInit() error {
+func (p *Plugin) helmInit(clientOnly bool) error {
 	log.Println("Initializing Helm")
 	cmd := []string{"init", "--debug"}
 
 	if p.ClusterConfig.Helm.MaxHistory > 0 {
 		cmd = append(cmd, "--history-max", strconv.Itoa(p.ClusterConfig.Helm.MaxHistory))
 	}
-	if p.ClusterConfig.Helm.Upgrade {
-		cmd = append(cmd, "--upgrade")
-		cmd = append(cmd, "--force-upgrade")
-	}
-	if p.ClusterConfig.Helm.Namespace != "" {
-		cmd = append(cmd, "--tiller-namespace", p.ClusterConfig.Helm.Namespace)
-	}
+
 	if len(p.ClusterConfig.Helm.Overrides) > 0 {
 		overrides := []string{}
 		for overrideKey, overrideValue := range p.ClusterConfig.Helm.Overrides {
@@ -178,8 +261,24 @@ func (p *Plugin) helmInit() error {
 		}
 		cmd = append(cmd, "--override", strings.Join(overrides, ","))
 	}
+
+	// If we don't need to install tiller don't
+	if clientOnly {
+		cmd = append(cmd, "--client-only")
+		return utils.Run(exec.Command(constants.HelmBin, cmd...), true)
+	}
+
+	// Initialization required for helm deployments
+	if p.ClusterConfig.Helm.Upgrade {
+		cmd = append(cmd, "--upgrade")
+		cmd = append(cmd, "--force-upgrade")
+	}
 	if p.Dryrun {
 		cmd = append(cmd, "--client-only")
+	}
+
+	if p.ClusterConfig.Helm.Namespace != "" {
+		cmd = append(cmd, "--tiller-namespace", p.ClusterConfig.Helm.Namespace)
 	}
 
 	if err := utils.Run(exec.Command(constants.HelmBin, cmd...), true); err != nil {
