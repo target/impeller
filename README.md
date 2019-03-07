@@ -106,10 +106,12 @@ helm:
       url: https://example.com/my-private-repo/
 releases:
   - name: cluster-autoscaler  # Specify the release name
+    deployment: kubectl # REQUIRED: Specify how the chart should be installed helm/kubectl
     namespace: kube-system  # Specify the namespace where to install
     version: 0.7.0  # Specify the version of the chart to install
     chartPath: stable/cluster-autoscaler
   - name: my-chart
+    deployment: helm
     namespace: kube-system
     version: ~1.x  # Supports the same syntax as Helm's --version flag
     chartPath: private-repo/my-chart
