@@ -113,23 +113,25 @@ func (p *Plugin) updateHelmRepos() error {
 
 func (p *Plugin) installAddon(release *types.Release) error {
 	log.Println("Installing addon:", release.Name, "@", release.Version)
-	if release.Deployment == "kubectl" {
-		return p.installKubectlAddon(release)
-	} else if release.Deployment == "helm" {
+	switch release.DeploymentMethod {
+	case "kubectl":
+		return p.installAddonViaKubectl(release)
+	case "helm":
 		if !p.helmInited {
 			clientOnly := false // defined purely for readability
-			err := p.helmInit(clientOnly)
-			if err != nil {
-				return err
+			if err := p.helmInit(clientOnly); err != nil {
+				return fmt.Errorf("failed to initialize helm for client and server: %s", err)
 			}
 			p.helmInited = true
 		}
-		return p.installHelmAddon(release)
+		return p.installAddonViaHelm(release)
+	default:
+		return fmt.Errorf("unsupported deploymentMethod: %s", release.DeploymentMethod)
 	}
-	return fmt.Errorf("unsupported deployment type: %s", release.Deployment)
 }
 
-func (p *Plugin) installHelmAddon(release *types.Release) error {
+// installAddonViaHelm installs addons via helm upgrade --install RELEASE CHART
+func (p *Plugin) installAddonViaHelm(release *types.Release) error {
 	cb := commandbuilder.CommandBuilder{Name: constants.HelmBin}
 	cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: "upgrade"})
 	cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: "--install"})
@@ -163,7 +165,10 @@ func (p *Plugin) installHelmAddon(release *types.Release) error {
 	return nil
 }
 
-func (p *Plugin) installKubectlAddon(release *types.Release) error {
+// installAddonViaKubectl installs addons via:
+// helm fetch --version release.Version --untar release.ChartPath
+// helm template $CHART | kubectl create -f -
+func (p *Plugin) installAddonViaKubectl(release *types.Release) error {
 	if err := p.fetchChart(release); err != nil {
 		return fmt.Errorf("error fetching chart for kubectl deployment: %s", err)
 	}

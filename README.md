@@ -16,6 +16,7 @@ Manages Helm charts running in Kubernetes clusters.
 ### Other features
 * Use it as a [Drone](https://drone.io/) plugin for CI/CD.
 * Read secrets from environment variables.
+* Deploy helm charts with helm/tiller or independently with kubectl
 
 ## How to use
 ### Command line
@@ -106,7 +107,7 @@ helm:
       url: https://example.com/my-private-repo/
 releases:
   - name: cluster-autoscaler  # Specify the release name
-    deployment: kubectl # REQUIRED: Specify how the chart should be installed helm/kubectl
+    deploymentMethod: kubectl # REQUIRED: Specify how the chart should be installed helm/kubectl
     namespace: kube-system  # Specify the namespace where to install
     version: 0.7.0  # Specify the version of the chart to install
     chartPath: stable/cluster-autoscaler
@@ -116,6 +117,13 @@ releases:
     version: ~1.x  # Supports the same syntax as Helm's --version flag
     chartPath: private-repo/my-chart
 ```
+
+#### Deployment Methods
+
+Deployment methods give cluster admins control of how their helm charts are deployed. Because not all
+clusters are able to run tiller admins may not be able to use helm to deploy their helm charts. Using
+a `kubectl` deployment method uses helm to fetch a chart, template the kubernetes manifests, and apply
+them via `kubectl create -f -`
 
 values/my-chart/default.yaml:
 ```yaml
