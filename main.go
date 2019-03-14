@@ -51,11 +51,13 @@ func run(ctx *cli.Context) error {
 	if ctx.String("cluster-config-path") == "" {
 		return fmt.Errorf("Cluster config path not set.")
 	}
-	if ctx.String("kube-config") == "" {
-		return fmt.Errorf("Kube config not set.")
-	}
-	if ctx.String("kube-context") == "" {
-		return fmt.Errorf("Kube context not set.")
+	if os.Getenv("DRONE") == "true" {
+		if ctx.String("kube-config") == "" {
+			return fmt.Errorf("Kube config not set.")
+		}
+		if ctx.String("kube-context") == "" {
+			return fmt.Errorf("Kube context not set.")
+		}
 	}
 
 	clusterConfig, err := utils.ReadClusterConfig(ctx.String("cluster-config-path"))
