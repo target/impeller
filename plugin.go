@@ -120,6 +120,8 @@ func (p *Plugin) installAddon(release *types.Release) error {
 	case "kubectl":
 		return p.installAddonViaKubectl(release)
 	case "helm":
+		fallthrough
+	default:
 		if !p.helmInited {
 			clientOnly := false // defined purely for readability
 			if err := p.helmInit(clientOnly); err != nil {
@@ -128,8 +130,6 @@ func (p *Plugin) installAddon(release *types.Release) error {
 			p.helmInited = true
 		}
 		return p.installAddonViaHelm(release)
-	default:
-		return fmt.Errorf("unsupported deploymentMethod: %s", release.DeploymentMethod)
 	}
 }
 

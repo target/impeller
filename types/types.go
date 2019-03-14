@@ -20,7 +20,7 @@ type HelmRepo struct {
 
 type Release struct {
 	Name             string     `yaml:"name"`
-	DeploymentMethod string     `yaml:"deploymentMethod"`
+	DeploymentMethod string     `yaml:"deploymentMethod,omitempty"`
 	Version          string     `yaml:"version"`
 	ChartPath        string     `yaml:"chartPath"`
 	Overrides        []Override `yaml:"overrides,omitempty"`
