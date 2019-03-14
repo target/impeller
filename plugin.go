@@ -17,8 +17,11 @@ import (
 )
 
 const (
-	kubectlBin = "/usr/bin/kubectl"
-	kubeConfig = "/root/.kube/config"
+	kubectlBin = "kubectl"
+)
+
+var (
+	kubeConfig = os.Getenv("HOME") + "/.kube/config"
 )
 
 type Plugin struct {
@@ -238,15 +241,24 @@ func (p *Plugin) templateChart(release *types.Release) (string, error) {
 }
 
 func (p *Plugin) setupKubeconfig() error {
-	log.Println("Creating Kubernetes config")
+	// Providing a Kubernetes config is mostly used for Drone support.
+	// If not provided, the default `kubectl` search path is used.
+	// WARNING: this may overwrite your config if it already exists.
 	if p.KubeConfig != "" {
+		log.Println("Creating Kubernetes config")
 		if err := ioutil.WriteFile(kubeConfig, []byte(p.KubeConfig), 0644); err != nil {
 			return fmt.Errorf("Error creating kube config file: %v", err)
 		}
 	}
-	cmd := exec.Command(kubectlBin, "config", "use-context", p.KubeContext)
-	if err := utils.Run(cmd, true); err != nil {
-		return fmt.Errorf("Error setting Kubernetes context: %v", err)
+
+	// Providing a Kubernetes config context is mostly used for Drone support.
+	// If not provided, the current context from Kubernetes config is used.
+	if p.KubeContext != "" {
+		log.Println("Setting Kubernetes context")
+		cmd := exec.Command(kubectlBin, "config", "use-context", p.KubeContext)
+		if err := utils.Run(cmd, true); err != nil {
+			return fmt.Errorf("Error setting Kubernetes context: %v", err)
+		}
 	}
 	return nil
 }
