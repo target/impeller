@@ -9,6 +9,7 @@ FROM alpine:3.8
 ENV HELM_VERSION=v2.12.3
 ENV KUBECTL_VERSION=v1.11.0
 
+RUN apk add ca-certificates
 RUN cd /tmp && \
     wget -O /tmp/helm.tar.gz https://storage.googleapis.com/kubernetes-helm/helm-${HELM_VERSION}-linux-amd64.tar.gz && \
     tar -xvf /tmp/helm.tar.gz && \
