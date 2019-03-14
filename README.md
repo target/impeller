@@ -107,23 +107,20 @@ helm:
       url: https://example.com/my-private-repo/
 releases:
   - name: cluster-autoscaler  # Specify the release name
-    deploymentMethod: kubectl # REQUIRED: Specify how the chart should be installed helm/kubectl
+    chartPath: stable/cluster-autoscaler  # Specify the chart source
     namespace: kube-system  # Specify the namespace where to install
     version: 0.7.0  # Specify the version of the chart to install
-    chartPath: stable/cluster-autoscaler
+    deploymentMethod: helm # Specify how the chart should be installed ("helm" or "kubectl")
   - name: my-chart
-    deployment: helm
+    chartPath: private-repo/my-chart
     namespace: kube-system
     version: ~1.x  # Supports the same syntax as Helm's --version flag
-    chartPath: private-repo/my-chart
+    deploymentMethod: kubectl
 ```
 
-#### Deployment Methods
-
-Deployment methods give cluster admins control of how their helm charts are deployed. Because not all
-clusters are able to run tiller admins may not be able to use helm to deploy their helm charts. Using
-a `kubectl` deployment method uses helm to fetch a chart, template the kubernetes manifests, and apply
-them via `kubectl create -f -`
+In the above example, the `deploymentMethod` option allows configuration of how Helm charts are deployed. Two methods are available:
+* `helm`: This option uses Helm's normal installation method (which is to have the Tiller pod create the resources declared in your chart).
+* `kubectl`: If you do not want to run a Tiller pod in your cluster, you can use this option to run `helm template` to convert a chart to Kubernetes manifests and then use `kubectl` to apply that manifest.
 
 values/my-chart/default.yaml:
 ```yaml
