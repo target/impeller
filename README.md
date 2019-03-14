@@ -2,6 +2,10 @@
 
 Manages Helm charts running in Kubernetes clusters.
 
+[![Docker Hub](https://img.shields.io/docker/pulls/target/impeller.svg)](https://hub.docker.com/r/target/impeller)
+[![Latest Release](https://img.shields.io/github/release/target/impeller.svg)](https://github.com/target/impeller/releases)
+[![MIT License](https://img.shields.io/github/license/target/impeller.svg)](https://github.com/target/impeller/blob/master/LICENSE)
+
 ## Use Cases
 ### Managing multiple Helm charts
 * Use declarative configurations to specify the versions of Helm charts running in your cluster.
