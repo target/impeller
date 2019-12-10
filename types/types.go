@@ -35,8 +35,9 @@ type Override struct {
 
 type HelmConfig struct {
 	Upgrade    bool              `yaml:"upgrade"`
-	MaxHistory int               `yaml:"maxHistory"`
-	Namespace  string            `yaml:"namespace"`
+	Debug	   bool              `yaml:"debug"`
+	LogLevel	uint              `yaml:"log"`
+	ServiceAccount  string       `yaml:"serviceAccount"`
 	Repos      []HelmRepo        `yaml:"repos"`
 	Overrides  map[string]string `yaml:"overrides"`
 }
@@ -63,3 +64,4 @@ type ValueFrom struct {
 func (vf ValueFrom) GetValue() (string, error) {
 	return os.Getenv(vf.Environment), nil
 }
+

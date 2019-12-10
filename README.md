@@ -103,7 +103,8 @@ clusters/my-cluster-name.yaml:
 ```yaml
 name: my-cluster-name  # This is used to find cluster-specific override files
 helm:
-  upgrade: true  # Should Tiller be auto-upgraded?
+  log: 5 # specifies log level
+  debug: flase # enables debug level logging
   repos:  # Make Helm aware of any repos you want to use
     - name: stable
       url: https://kubernetes-charts.storage.googleapis.com/
