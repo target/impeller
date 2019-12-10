@@ -7,9 +7,8 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/target/impeller/constants"
 	"github.com/target/impeller/types"
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v2"
 )
 
 // Run executes a provided command while also sending its output to stdout and
@@ -44,19 +43,3 @@ func ReadClusterConfig(configPath string) (config types.ClusterConfig, err error
 	return
 }
 
-// PollTiller makes `retries` attempts to connect with the Tiller pod running
-// in the cluster. A `tillerNamespace` can be set to override the default.
-func PollTiller(retries int, tillerNamespace string) error {
-	args := []string{"version"}
-	if tillerNamespace != "" {
-		args = append(args, "--tiller-namespace", tillerNamespace)
-	}
-
-	var err error
-	for i := 0; i < retries; i++ {
-		if err = Run(exec.Command(constants.HelmBin, args...), true); err == nil {
-			return nil
-		}
-	}
-	return err
-}

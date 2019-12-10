@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strconv"
 	"strings"
 
 	"github.com/target/impeller/constants"
@@ -30,7 +29,6 @@ type Plugin struct {
 	KubeConfig    string
 	KubeContext   string
 	Dryrun        bool
-	helmInited    bool // Indication of helm initialization
 }
 
 func (p *Plugin) Exec() error {
@@ -38,13 +36,6 @@ func (p *Plugin) Exec() error {
 	if err := p.setupKubeconfig(); err != nil {
 		return fmt.Errorf("Error initializing Kubernetes config: %v", err)
 	}
-
-	// Helm init
-	clientOnly := true
-	if err := p.helmInit(clientOnly); err != nil {
-		return fmt.Errorf("Error initializing Helm: %v", err)
-	}
-
 	// Add configured repos
 	for _, repo := range p.ClusterConfig.Helm.Repos {
 		if err := p.addHelmRepo(repo); err != nil {
@@ -122,13 +113,6 @@ func (p *Plugin) installAddon(release *types.Release) error {
 	case "helm":
 		fallthrough
 	default:
-		if !p.helmInited {
-			clientOnly := false // defined purely for readability
-			if err := p.helmInit(clientOnly); err != nil {
-				return fmt.Errorf("failed to initialize helm for client and server: %s", err)
-			}
-			p.helmInited = true
-		}
 		return p.installAddonViaHelm(release)
 	}
 }
@@ -142,12 +126,17 @@ func (p *Plugin) installAddonViaHelm(release *types.Release) error {
 	cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: release.ChartPath})
 	cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeLongParam, Name: "version", Value: release.Version})
 
+	if p.ClusterConfig.Helm.Debug {
+		cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: "--debug"})
+	}
+
 	// Add namespaces to command
 	if release.Namespace != "" {
 		cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeLongParam, Name: "namespace", Value: release.Namespace})
 	}
-	if p.ClusterConfig.Helm.Namespace != "" {
-		cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeLongParam, Name: "tiller-namespace", Value: p.ClusterConfig.Helm.Namespace})
+
+	if p.ClusterConfig.Helm.LogLevel != "" {
+		cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeLongParam, Name: "v", Value: p.ClusterConfig.Helm.LogLevel})
 	}
 
 	// Add Overrides
@@ -263,13 +252,9 @@ func (p *Plugin) setupKubeconfig() error {
 	return nil
 }
 
-func (p *Plugin) helmInit(clientOnly bool) error {
-	log.Println("Initializing Helm")
-	cmd := []string{"init", "--debug"}
-
-	if p.ClusterConfig.Helm.MaxHistory > 0 {
-		cmd = append(cmd, "--history-max", strconv.Itoa(p.ClusterConfig.Helm.MaxHistory))
-	}
+func (p *Plugin) helmInit(namespace string ) error {
+	log.Printf("Initializing Helm..." )
+	cmd := []string{"--debug"}
 
 	if len(p.ClusterConfig.Helm.Overrides) > 0 {
 		overrides := []string{}
@@ -279,11 +264,6 @@ func (p *Plugin) helmInit(clientOnly bool) error {
 		cmd = append(cmd, "--override", strings.Join(overrides, ","))
 	}
 
-	// If we don't need to install tiller don't
-	if clientOnly {
-		cmd = append(cmd, "--client-only")
-		return utils.Run(exec.Command(constants.HelmBin, cmd...), true)
-	}
 
 	// Initialization required for helm deployments
 	if p.ClusterConfig.Helm.Upgrade {
@@ -294,15 +274,19 @@ func (p *Plugin) helmInit(clientOnly bool) error {
 		cmd = append(cmd, "--client-only")
 	}
 
-	if p.ClusterConfig.Helm.Namespace != "" {
-		cmd = append(cmd, "--tiller-namespace", p.ClusterConfig.Helm.Namespace)
+	if p.ClusterConfig.Helm.Debug {
+		cmd = append(cmd, "--debug")
+	}
+
+	if p.ClusterConfig.Helm.ServiceAccount != "" {
+		cmd = append(cmd, "--service-account", p.ClusterConfig.Helm.ServiceAccount)
 	}
 
 	if err := utils.Run(exec.Command(constants.HelmBin, cmd...), true); err != nil {
 		return err
 	}
 
-	return utils.PollTiller(10, p.ClusterConfig.Helm.Namespace)
+	return nil
 }
 
 func (p *Plugin) overrides(release *types.Release) (args []commandbuilder.Arg) {
