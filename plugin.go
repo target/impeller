@@ -8,7 +8,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
-
 	"github.com/target/impeller/constants"
 	"github.com/target/impeller/types"
 	"github.com/target/impeller/utils"
@@ -135,8 +134,8 @@ func (p *Plugin) installAddonViaHelm(release *types.Release) error {
 		cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeLongParam, Name: "namespace", Value: release.Namespace})
 	}
 
-	if p.ClusterConfig.Helm.LogLevel != "" {
-		cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeLongParam, Name: "v", Value: p.ClusterConfig.Helm.LogLevel})
+	if p.ClusterConfig.Helm.LogLevel != 0 {
+		cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeLongParam, Name: "v", Value: fmt.Sprint(p.ClusterConfig.Helm.LogLevel)})
 	}
 
 	// Add Overrides

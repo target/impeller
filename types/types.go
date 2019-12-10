@@ -36,7 +36,7 @@ type Override struct {
 type HelmConfig struct {
 	Upgrade    bool              `yaml:"upgrade"`
 	Debug	   bool              `yaml:"debug"`
-	LogLevel	string              `yaml:"log"`
+	LogLevel	uint              `yaml:"log"`
 	ServiceAccount  string       `yaml:"serviceAccount"`
 	Repos      []HelmRepo        `yaml:"repos"`
 	Overrides  map[string]string `yaml:"overrides"`
