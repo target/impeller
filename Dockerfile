@@ -24,3 +24,4 @@ RUN wget -O /usr/bin/kubectl https://storage.googleapis.com/kubernetes-release/r
 RUN mkdir /root/.kube
 ENTRYPOINT ["/usr/bin/impeller"]
 COPY --from=builder /go/src/github.com/target/impeller/impeller /usr/bin/impeller
+COPY --from=builder /usr/local/bin/helm /usr/local/bin/helm
