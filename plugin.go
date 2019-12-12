@@ -124,6 +124,7 @@ func (p *Plugin) installAddonViaHelm(release *types.Release) error {
 	cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: release.Name})
 	cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: release.ChartPath})
 	cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeLongParam, Name: "version", Value: release.Version})
+	cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeLongParam, Name: "kube-context", Value: p.KubeContext})
 
 	if p.ClusterConfig.Helm.Debug {
 		cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: "--debug"})
@@ -251,42 +252,6 @@ func (p *Plugin) setupKubeconfig() error {
 	return nil
 }
 
-func (p *Plugin) helmInit(namespace string ) error {
-	log.Printf("Initializing Helm..." )
-	cmd := []string{"--debug"}
-
-	if len(p.ClusterConfig.Helm.Overrides) > 0 {
-		overrides := []string{}
-		for overrideKey, overrideValue := range p.ClusterConfig.Helm.Overrides {
-			overrides = append(overrides, fmt.Sprintf("'%v'='%v'", overrideKey, overrideValue))
-		}
-		cmd = append(cmd, "--override", strings.Join(overrides, ","))
-	}
-
-
-	// Initialization required for helm deployments
-	if p.ClusterConfig.Helm.Upgrade {
-		cmd = append(cmd, "--upgrade")
-		cmd = append(cmd, "--force-upgrade")
-	}
-	if p.Dryrun {
-		cmd = append(cmd, "--client-only")
-	}
-
-	if p.ClusterConfig.Helm.Debug {
-		cmd = append(cmd, "--debug")
-	}
-
-	if p.ClusterConfig.Helm.ServiceAccount != "" {
-		cmd = append(cmd, "--service-account", p.ClusterConfig.Helm.ServiceAccount)
-	}
-
-	if err := utils.Run(exec.Command(constants.HelmBin, cmd...), true); err != nil {
-		return err
-	}
-
-	return nil
-}
 
 func (p *Plugin) overrides(release *types.Release) (args []commandbuilder.Arg) {
 	// Add override files
