@@ -14,7 +14,7 @@ RUN cd /tmp && \
     && chmod +x get_helm.sh \
     && ./get_helm.sh
 
-FROM alpine:3.8
+FROM alpine:3.10.3
 ENV DESIRED_VERSION=v3.0.1
 ENV KUBECTL_VERSION=v1.15.6
 
