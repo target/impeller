@@ -15,7 +15,7 @@ RUN cd /tmp && \
     && ./get_helm.sh
 
 FROM alpine:3.10.3
-ENV DESIRED_VERSION=v3.0.1
+ENV DESIRED_VERSION=v3.0.2
 ENV KUBECTL_VERSION=v1.15.6
 
 RUN apk add ca-certificates
