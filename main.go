@@ -39,6 +39,11 @@ func main() {
 			Usage:  "Enables a dry_run deployment",
 			EnvVar: "DRY_RUN,PLUGIN_DRY_RUN",
 		},
+		cli.BoolFlag{
+			Name:   "diff-run",
+			Usage:  "compares upgrade changes deployment",
+			EnvVar: "DIFF_RUN,PLUGIN_DIFF_RUN",
+		},
 	}
 
 	err := app.Run(os.Args)
@@ -71,6 +76,7 @@ func run(ctx *cli.Context) error {
 		KubeConfig:    ctx.String("kube-config"),
 		KubeContext:   ctx.String("kube-context"),
 		Dryrun:        ctx.Bool("dry-run"),
+		Diffrun:       ctx.Bool("diff-run"),
 	}
 
 	return plugin.Exec()
