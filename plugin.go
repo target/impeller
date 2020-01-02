@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+
 	"github.com/target/impeller/constants"
 	"github.com/target/impeller/types"
 	"github.com/target/impeller/utils"
@@ -28,6 +29,7 @@ type Plugin struct {
 	KubeConfig    string
 	KubeContext   string
 	Dryrun        bool
+	Diffrun       bool
 }
 
 func (p *Plugin) Exec() error {
@@ -119,8 +121,16 @@ func (p *Plugin) installAddon(release *types.Release) error {
 // installAddonViaHelm installs addons via helm upgrade --install RELEASE CHART
 func (p *Plugin) installAddonViaHelm(release *types.Release) error {
 	cb := commandbuilder.CommandBuilder{Name: constants.HelmBin}
-	cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: "upgrade"})
-	cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: "--install"})
+	if p.Diffrun {
+		log.Println("Running Diff plugin:", release.Name)
+		cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: "diff"})
+		cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: "upgrade"})
+		cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: "--allow-unreleased"})
+		cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: "--suppress-secrets"})
+	} else {
+		cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: "upgrade"})
+		cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: "--install"})
+	}
 	cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: release.Name})
 	cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: release.ChartPath})
 	cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeLongParam, Name: "version", Value: release.Version})
@@ -251,7 +261,6 @@ func (p *Plugin) setupKubeconfig() error {
 	}
 	return nil
 }
-
 
 func (p *Plugin) overrides(release *types.Release) (args []commandbuilder.Arg) {
 	// Add override files

@@ -24,7 +24,12 @@ Manages Helm charts running in Kubernetes clusters.
 
 ## How to use
 ### Command line
+1. Deployment command:
 `impeller --cluster-config-path=./clusters/my-cluster.yaml --kube-config="$(cat ~/.kube/config)" --kube-context my-kubernetes-context`
+1. Dry run command:
+`impeller --cluster-config-path=./clusters/my-cluster.yaml --kube-config="$(cat ~/.kube/config)" --kube-context my-kubernetes-context --dry-run`
+1. Diff run command:
+`impeller --cluster-config-path=./clusters/my-cluster.yaml --kube-config="$(cat ~/.kube/config)" --kube-context my-kubernetes-context --diff-run`
 
 ### Drone pipeline
 #### Simple example
