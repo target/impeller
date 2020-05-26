@@ -64,4 +64,3 @@ type ValueFrom struct {
 func (vf ValueFrom) GetValue() (string, error) {
 	return os.Getenv(vf.Environment), nil
 }
-

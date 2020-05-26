@@ -5,7 +5,10 @@ import (
 	"log"
 	"os"
 
+	"github.com/target/impeller/types"
 	"github.com/target/impeller/utils"
+	"github.com/target/impeller/utils/report"
+
 	"github.com/urfave/cli"
 )
 
@@ -44,6 +47,17 @@ func main() {
 			Usage:  "compares upgrade changes deployment",
 			EnvVar: "DIFF_RUN,PLUGIN_DIFF_RUN",
 		},
+		cli.BoolFlag{
+			Name:   "audit",
+			Usage:  "create audit report",
+			EnvVar: "AUDIT_RUN,PLUGIN_AUDIT_RUN",
+		},
+		cli.StringFlag{
+			Name:   "audit-file",
+			Usage:  "audit report file name",
+			EnvVar: "AUDIT_FILE_NAME,PLUGIN_AUDIT_FILE_NAME",
+		},
+
 	}
 
 	err := app.Run(os.Args)
@@ -53,6 +67,11 @@ func main() {
 }
 
 func run(ctx *cli.Context) error {
+	var clusterConfig types.ClusterConfig
+	var clist report.Clusters
+	var auditReportFileName string
+	var err error
+
 	if ctx.String("cluster-config-path") == "" {
 		return fmt.Errorf("Cluster config path not set.")
 	}
@@ -64,19 +83,35 @@ func run(ctx *cli.Context) error {
 			return fmt.Errorf("Kube context not set.")
 		}
 	}
-
-	clusterConfig, err := utils.ReadClusterConfig(ctx.String("cluster-config-path"))
-	if err != nil {
-		return fmt.Errorf("Error reading cluster config: %v", err)
+	if ctx.String("audit") == "" {
+		clusterConfig, err = utils.ReadClusterConfig(ctx.String("cluster-config-path"))
+		if err != nil {
+			return fmt.Errorf("Error reading cluster config: %v", err)
+		}
+	} else {
+		if ctx.String("audit-file") == "" {
+			auditReportFileName = "./auditreport.csv"
+		} else {
+			auditReportFileName = ctx.String("audit-file")
+			}
+		clist, err = utils.ListClusters(ctx.String("cluster-config-path"))
+		if err != nil {
+			return fmt.Errorf("Error reading cluster config: %v", err)
+		}
 	}
+
 
 	plugin := Plugin{
 		ClusterConfig: clusterConfig,
+		ClusterConfigPath: ctx.String("cluster-config-path"),
+		ClustersList:  clist,
 		ValueFiles:    ctx.StringSlice("value-files"),
 		KubeConfig:    ctx.String("kube-config"),
 		KubeContext:   ctx.String("kube-context"),
 		Dryrun:        ctx.Bool("dry-run"),
 		Diffrun:       ctx.Bool("diff-run"),
+		Audit:       ctx.Bool("audit"),
+		AuditFile:       auditReportFileName,
 	}
 
 	return plugin.Exec()
