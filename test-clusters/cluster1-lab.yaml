@@ -1,0 +1,11 @@
+name: cluster1-lab
+releases:
+#
+  - name: sample-server
+    namespace: kube-system
+    version: 3.9.0
+    chartPath: stable/sample-server
+  - name: sample-ingress
+    namespace: kube-system
+    version: 3.9.3
+    chartPath: stable/sample-ingress

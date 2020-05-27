@@ -30,6 +30,10 @@ Manages Helm charts running in Kubernetes clusters.
 `impeller --cluster-config-path=./clusters/my-cluster.yaml --kube-config="$(cat ~/.kube/config)" --kube-context my-kubernetes-context --dry-run`
 1. Diff run command:
 `impeller --cluster-config-path=./clusters/my-cluster.yaml --kube-config="$(cat ~/.kube/config)" --kube-context my-kubernetes-context --diff-run`
+1. Generate Audit report file:
+`impeller --cluster-config-path=./clusters  --audit=true`
+or 
+`impeller --cluster-config-path=./clusters  --audit=true --audit-file=./myreport.csv`
 
 ### Drone pipeline
 #### Simple example

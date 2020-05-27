@@ -13,6 +13,7 @@ import (
 	"github.com/target/impeller/types"
 	"github.com/target/impeller/utils"
 	"github.com/target/impeller/utils/commandbuilder"
+	"github.com/target/impeller/utils/report"
 )
 
 const (
@@ -24,36 +25,67 @@ var (
 )
 
 type Plugin struct {
-	ClusterConfig types.ClusterConfig
-	ValueFiles    []string
-	KubeConfig    string
-	KubeContext   string
-	Dryrun        bool
-	Diffrun       bool
+	ClusterConfig     types.ClusterConfig
+	ClusterConfigPath string
+	ClustersList      report.Clusters
+	ValueFiles        []string
+	KubeConfig        string
+	KubeContext       string
+	Dryrun            bool
+	Diffrun           bool
+	Audit             bool
+	AuditFile         string
 }
 
 func (p *Plugin) Exec() error {
-	// Init Kubernetes config
-	if err := p.setupKubeconfig(); err != nil {
-		return fmt.Errorf("Error initializing Kubernetes config: %v", err)
-	}
-	// Add configured repos
-	for _, repo := range p.ClusterConfig.Helm.Repos {
-		if err := p.addHelmRepo(repo); err != nil {
-			return fmt.Errorf("Error adding Helm repo: %v", err)
+	if !p.Audit {
+		// Init Kubernetes config
+		if err := p.setupKubeconfig(); err != nil {
+			return fmt.Errorf("Error initializing Kubernetes config: %v", err)
+		}
+		// Add configured repos
+		for _, repo := range p.ClusterConfig.Helm.Repos {
+			if err := p.addHelmRepo(repo); err != nil {
+				return fmt.Errorf("Error adding Helm repo: %v", err)
+			}
+		}
+		if err := p.updateHelmRepos(); err != nil {
+			return fmt.Errorf("Error updating Helm repos: %v", err)
+		}
+
+		// Install addons
+		for _, addon := range p.ClusterConfig.Releases {
+			if err := p.installAddon(&addon); err != nil {
+				return fmt.Errorf("Error installing addon \"%s\": %v", addon.Name, err)
+			}
+		}
+	} else {
+		rpt := report.NewReport()
+		for cluster := range p.ClustersList.ClusterList {
+			clusterConfig, err := utils.ReadClusterConfig(p.ClusterConfigPath + "/" + cluster)
+			if err != nil {
+				return fmt.Errorf("Error reading cluster config: %v", err)
+			}
+
+			for _, addon := range clusterConfig.Releases {
+				rpt.Add(report.ReportKey{
+					Name:      addon.Name,
+					Cluster:   cluster,
+					Namespace: addon.Namespace,
+				}, report.ReportDetail{
+					Version:    addon.Version,
+					Overrides:  "",
+					ChartPath:  addon.ChartPath,
+					ValueFiles: utils.GetValueFiles(&addon.ValueFiles),
+				})
+			}
+		}
+		// write report to output file
+		err := rpt.Write(p.AuditFile)
+		if err != nil {
+			return err
 		}
 	}
-	if err := p.updateHelmRepos(); err != nil {
-		return fmt.Errorf("Error updating Helm repos: %v", err)
-	}
-
-	// Install addons
-	for _, addon := range p.ClusterConfig.Releases {
-		if err := p.installAddon(&addon); err != nil {
-			return fmt.Errorf("Error installing addon \"%s\": %v", addon.Name, err)
-		}
-	}
-
 	return nil
 }
 

@@ -5,7 +5,10 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
 	"github.com/target/impeller/types"
+	"github.com/target/impeller/utils"
+	"github.com/target/impeller/utils/report"
 )
 
 func TestOverridesValueFiles(t *testing.T) {
@@ -41,4 +44,24 @@ func TestOverridesIndividualOverrides(t *testing.T) {
 	assert.Equal(t, "set", overrides[0].Name)
 	assert.Equal(t, "image.tag=test", overrides[0].Value)
 	assert.True(t, overrides[0].ValueSecret)
+}
+
+func TestPlugin_ExecReport(t *testing.T) {
+	p := Plugin{
+		ClusterConfigPath: "./test-clusters",
+		ClustersList:      report.Clusters{},
+		ValueFiles:        nil,
+		KubeConfig:        "",
+		KubeContext:       "",
+		Dryrun:            false,
+		Diffrun:           false,
+		Audit:             true,
+		AuditFile:         "./go-test.csv",
+	}
+	clist, err := utils.ListClusters(p.ClusterConfigPath)
+	require.Nil(t, err)
+	p.ClustersList = clist
+	err = p.Exec()
+	require.Nil(t, err)
+
 }
