@@ -45,6 +45,7 @@ func ReadClusterConfig(configPath string) (config types.ClusterConfig, err error
 
 	return
 }
+
 // ListClusters function lists cluster configuration files
 func ListClusters(configPath string) (cl report.Clusters, err error) {
 	cl = report.NewClusters()
@@ -54,20 +55,19 @@ func ListClusters(configPath string) (cl report.Clusters, err error) {
 		return
 	}
 	for _, file := range dirList {
-		if ! file.IsDir() {
+		if !file.IsDir() {
 			cl.Add(file.Name())
 		}
 	}
 
-
 	return
 }
 
-func  GetValueFiles(valueFiles *[]string) (reportOverrides string) {
-	if len(*valueFiles) >0 {
-	for _,vf := range *valueFiles {
-		reportOverrides = reportOverrides +" |"  + vf
-	}
+func GetValueFiles(valueFiles *[]string) (reportOverrides string) {
+	if len(*valueFiles) > 0 {
+		for _, vf := range *valueFiles {
+			reportOverrides = reportOverrides + " |" + vf
+		}
 	} else {
 		reportOverrides = "no overrides"
 	}

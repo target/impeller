@@ -35,35 +35,34 @@ type Plugin struct {
 	Diffrun           bool
 	Audit             bool
 	AuditFile         string
-
 }
 
 func (p *Plugin) Exec() error {
-	if ! p.Audit {
-	// Init Kubernetes config
-	if err := p.setupKubeconfig(); err != nil {
-		return fmt.Errorf("Error initializing Kubernetes config: %v", err)
-	}
-	// Add configured repos
-	for _, repo := range p.ClusterConfig.Helm.Repos {
-		if err := p.addHelmRepo(repo); err != nil {
-			return fmt.Errorf("Error adding Helm repo: %v", err)
+	if !p.Audit {
+		// Init Kubernetes config
+		if err := p.setupKubeconfig(); err != nil {
+			return fmt.Errorf("Error initializing Kubernetes config: %v", err)
 		}
-	}
-	if err := p.updateHelmRepos(); err != nil {
-		return fmt.Errorf("Error updating Helm repos: %v", err)
-	}
+		// Add configured repos
+		for _, repo := range p.ClusterConfig.Helm.Repos {
+			if err := p.addHelmRepo(repo); err != nil {
+				return fmt.Errorf("Error adding Helm repo: %v", err)
+			}
+		}
+		if err := p.updateHelmRepos(); err != nil {
+			return fmt.Errorf("Error updating Helm repos: %v", err)
+		}
 
-	// Install addons
-	for _, addon := range p.ClusterConfig.Releases {
-		if err := p.installAddon(&addon); err != nil {
-			return fmt.Errorf("Error installing addon \"%s\": %v", addon.Name, err)
+		// Install addons
+		for _, addon := range p.ClusterConfig.Releases {
+			if err := p.installAddon(&addon); err != nil {
+				return fmt.Errorf("Error installing addon \"%s\": %v", addon.Name, err)
+			}
 		}
-	}
 	} else {
 		rpt := report.NewReport()
-		for  cluster := range p.ClustersList.ClusterList {
-			clusterConfig, err := utils.ReadClusterConfig(p.ClusterConfigPath+"/"+cluster)
+		for cluster := range p.ClustersList.ClusterList {
+			clusterConfig, err := utils.ReadClusterConfig(p.ClusterConfigPath + "/" + cluster)
 			if err != nil {
 				return fmt.Errorf("Error reading cluster config: %v", err)
 			}
@@ -74,18 +73,18 @@ func (p *Plugin) Exec() error {
 					Cluster:   cluster,
 					Namespace: addon.Namespace,
 				}, report.ReportDetail{
-					Version:   addon.Version,
+					Version:    addon.Version,
 					Overrides:  "",
-					ChartPath: addon.ChartPath,
+					ChartPath:  addon.ChartPath,
 					ValueFiles: utils.GetValueFiles(&addon.ValueFiles),
 				})
 			}
 		}
-	// write report to output file
-	err := rpt.Write(p.AuditFile)
-	if 	err != nil {
-		return err
-	}
+		// write report to output file
+		err := rpt.Write(p.AuditFile)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -355,4 +354,3 @@ func (p *Plugin) overrides(release *types.Release) (args []commandbuilder.Arg) {
 	}
 	return args
 }
-

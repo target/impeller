@@ -57,7 +57,6 @@ func main() {
 			Usage:  "audit report file name",
 			EnvVar: "AUDIT_FILE_NAME,PLUGIN_AUDIT_FILE_NAME",
 		},
-
 	}
 
 	err := app.Run(os.Args)
@@ -93,25 +92,24 @@ func run(ctx *cli.Context) error {
 			auditReportFileName = "./auditreport.csv"
 		} else {
 			auditReportFileName = ctx.String("audit-file")
-			}
+		}
 		clist, err = utils.ListClusters(ctx.String("cluster-config-path"))
 		if err != nil {
 			return fmt.Errorf("Error reading cluster config: %v", err)
 		}
 	}
 
-
 	plugin := Plugin{
-		ClusterConfig: clusterConfig,
+		ClusterConfig:     clusterConfig,
 		ClusterConfigPath: ctx.String("cluster-config-path"),
-		ClustersList:  clist,
-		ValueFiles:    ctx.StringSlice("value-files"),
-		KubeConfig:    ctx.String("kube-config"),
-		KubeContext:   ctx.String("kube-context"),
-		Dryrun:        ctx.Bool("dry-run"),
-		Diffrun:       ctx.Bool("diff-run"),
-		Audit:       ctx.Bool("audit"),
-		AuditFile:       auditReportFileName,
+		ClustersList:      clist,
+		ValueFiles:        ctx.StringSlice("value-files"),
+		KubeConfig:        ctx.String("kube-config"),
+		KubeContext:       ctx.String("kube-context"),
+		Dryrun:            ctx.Bool("dry-run"),
+		Diffrun:           ctx.Bool("diff-run"),
+		Audit:             ctx.Bool("audit"),
+		AuditFile:         auditReportFileName,
 	}
 
 	return plugin.Exec()

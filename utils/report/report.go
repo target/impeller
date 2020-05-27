@@ -30,7 +30,7 @@ func NewReport() Report {
 
 	return Report{
 		ReportFile:   "auditreport.csv",
-		ReportHeader: "Name, Cluster, Namespace, Version, ChartPath, ValueFiles",
+		ReportHeader: "Name,Cluster,Namespace,Version,ChartPath,ValueFiles",
 		ReportLines:  make(map[ReportKey]ReportDetail),
 	}
 }
