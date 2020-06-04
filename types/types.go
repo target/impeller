@@ -23,6 +23,7 @@ type Release struct {
 	DeploymentMethod string     `yaml:"deploymentMethod,omitempty"`
 	Version          string     `yaml:"version"`
 	ChartPath        string     `yaml:"chartPath"`
+	ChartsSource     string     `yaml:"chartsSource"`
 	Overrides        []Override `yaml:"overrides,omitempty"`
 	Namespace        string     `yaml:"namespace,omitempty"`
 	ValueFiles       []string   `yaml:"valueFiles,omitempty"`
@@ -34,12 +35,12 @@ type Override struct {
 }
 
 type HelmConfig struct {
-	Upgrade    bool              `yaml:"upgrade"`
-	Debug	   bool              `yaml:"debug"`
-	LogLevel	uint              `yaml:"log"`
-	ServiceAccount  string       `yaml:"serviceAccount"`
-	Repos      []HelmRepo        `yaml:"repos"`
-	Overrides  map[string]string `yaml:"overrides"`
+	Upgrade        bool              `yaml:"upgrade"`
+	Debug          bool              `yaml:"debug"`
+	LogLevel       uint              `yaml:"log"`
+	ServiceAccount string            `yaml:"serviceAccount"`
+	Repos          []HelmRepo        `yaml:"repos"`
+	Overrides      map[string]string `yaml:"overrides"`
 }
 
 type Value struct {

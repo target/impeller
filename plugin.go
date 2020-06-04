@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -60,6 +61,7 @@ func (p *Plugin) Exec() error {
 			}
 		}
 	} else {
+		log.Println("Generating Audit report:")
 		rpt := report.NewReport()
 		for cluster := range p.ClustersList.ClusterList {
 			clusterConfig, err := utils.ReadClusterConfig(p.ClusterConfigPath + "/" + cluster)
@@ -73,10 +75,11 @@ func (p *Plugin) Exec() error {
 					Cluster:   cluster,
 					Namespace: addon.Namespace,
 				}, report.ReportDetail{
-					Version:    addon.Version,
-					Overrides:  "",
-					ChartPath:  addon.ChartPath,
-					ValueFiles: utils.GetValueFiles(&addon.ValueFiles),
+					Version:      addon.Version,
+					Overrides:    "",
+					ChartPath:    addon.ChartPath,
+					ChartsSource: addon.ChartsSource,
+					ValueFiles:   utils.GetValueFiles(&addon.ValueFiles),
 				})
 			}
 		}
@@ -180,7 +183,18 @@ func (p *Plugin) installAddonViaHelm(release *types.Release) error {
 	if p.ClusterConfig.Helm.LogLevel != 0 {
 		cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeLongParam, Name: "v", Value: fmt.Sprint(p.ClusterConfig.Helm.LogLevel)})
 	}
+	if release.ChartsSource != "" {
+		log.Println("Charts Source defined for:", release.Name)
 
+		tarFileName, err := p.downloadCharts(release)
+		if err != nil {
+			return fmt.Errorf("error downloading charts: %s", err)
+		}
+		err = p.extractCharts(tarFileName)
+		if err != nil {
+			return fmt.Errorf("error extracting charts archive: %s", err)
+		}
+	}
 	// Add Overrides
 	for _, override := range p.overrides(release) {
 		cb.Add(override)
@@ -247,6 +261,35 @@ func (p *Plugin) fetchChart(release *types.Release) error {
 	cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: "--untar"})
 	cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: release.ChartPath})
 	return cb.Run()
+}
+
+func (p *Plugin) downloadCharts(release *types.Release) (string, error) {
+
+	url, err := url.Parse(release.ChartsSource)
+	if err != nil {
+		return "", fmt.Errorf("error parsing charts url: %s", err)
+	}
+	splits := strings.Split(url.Path, "/")
+	tarFilePath := "./downloads/" + splits[len(splits)-1]
+
+	if _, err := os.Stat(tarFilePath); err != nil || os.IsExist(err) {
+		log.Println("Downloading:", tarFilePath)
+		cmd := exec.Command(constants.WgetBin, "-q", "-n", "-P", "./downloads", release.ChartsSource)
+		if err := utils.Run(cmd, true); err != nil {
+			return "", fmt.Errorf("Error extracting Charts archive: %v", err)
+		}
+	} else {
+		log.Println("File exist, skipping download:", tarFilePath)
+	}
+	return tarFilePath, nil
+}
+
+func (p *Plugin) extractCharts(archiveName string) error {
+	cmd := exec.Command(constants.TarBin, "-xzf", archiveName, "-C", "./downloads")
+	if err := utils.Run(cmd, true); err != nil {
+		return fmt.Errorf("Error extracting Charts archive: %v", err)
+	}
+	return nil
 }
 
 func (p *Plugin) templateChart(release *types.Release) (string, error) {

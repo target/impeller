@@ -32,7 +32,7 @@ Manages Helm charts running in Kubernetes clusters.
 `impeller --cluster-config-path=./clusters/my-cluster.yaml --kube-config="$(cat ~/.kube/config)" --kube-context my-kubernetes-context --diff-run`
 1. Generate Audit report file:
 `impeller --cluster-config-path=./clusters  --audit=true`
-or 
+or
 `impeller --cluster-config-path=./clusters  --audit=true --audit-file=./myreport.csv`
 
 ### Drone pipeline
@@ -147,4 +147,19 @@ resources:
   memory:
     requests: 1Gi
     limits: 1Gi
+```
+
+### Deploying Release from tar file
+
+1. Add `chartsSource` field to the `release` to make impeller download charts tar archive
+1. Set `chartPath` to point to extracted chart location.
+
+```
+releases:
+  - name: istio-base
+    namespace: kube-system
+    version: ~x.x.x
+    chartPath: "./downloads/istio-1.6.0/manifests/charts/base"
+    chartsSource: "https://github.com/istio/istio/releases/download/1.6.0/istio-1.6.0-linux-amd64.tar.gz"
+
 ```

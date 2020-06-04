@@ -20,17 +20,18 @@ type ReportKey struct {
 }
 
 type ReportDetail struct {
-	Version    string
-	ChartPath  string
-	Overrides  string
-	ValueFiles string
+	Version      string
+	ChartPath    string
+	ChartsSource string
+	Overrides    string
+	ValueFiles   string
 }
 
 func NewReport() Report {
 
 	return Report{
 		ReportFile:   "auditreport.csv",
-		ReportHeader: "Name,Cluster,Namespace,Version,ChartPath,ValueFiles",
+		ReportHeader: "Name,Cluster,Namespace,Version,ChartPath,ChartsSource,ValueFiles",
 		ReportLines:  make(map[ReportKey]ReportDetail),
 	}
 }
@@ -41,12 +42,13 @@ func (rpt *Report) Add(reportkey ReportKey, detail ReportDetail) {
 
 func (rpt *Report) Write(fName string) error {
 	type reportline struct {
-		Name       string
-		Cluster    string
-		Namespace  string
-		Version    string
-		ChartPath  string
-		ValueFiles string
+		Name         string
+		Cluster      string
+		Namespace    string
+		Version      string
+		ChartPath    string
+		ChartsSource string
+		ValueFiles   string
 	}
 	fd, err := os.Create(fName)
 	if err != nil {
@@ -57,17 +59,18 @@ func (rpt *Report) Write(fName string) error {
 	// Report header
 	fmt.Fprintln(fd, rpt.ReportHeader)
 	for key, line := range rpt.ReportLines {
-		t, err := template.New("Report").Parse("{{.Name}},{{.Cluster}},{{.Namespace}},{{.Version}},{{.ChartPath}},{{.ValueFiles}}\n")
+		t, err := template.New("Report").Parse("{{.Name}},{{.Cluster}},{{.Namespace}},{{.Version}},{{.ChartPath}},{{.ChartsSource}},{{.ValueFiles}}\n")
 		if err != nil {
 			panic(err)
 		}
 		item := reportline{
-			Name:       key.Name,
-			Cluster:    key.Cluster,
-			Namespace:  key.Namespace,
-			Version:    line.Version,
-			ChartPath:  line.ChartPath,
-			ValueFiles: line.ValueFiles,
+			Name:         key.Name,
+			Cluster:      key.Cluster,
+			Namespace:    key.Namespace,
+			Version:      line.Version,
+			ChartPath:    line.ChartPath,
+			ChartsSource: line.ChartsSource,
+			ValueFiles:   line.ValueFiles,
 		}
 		err = t.Execute(fd, item)
 		if err != nil {
