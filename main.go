@@ -82,7 +82,7 @@ func run(ctx *cli.Context) error {
 			return fmt.Errorf("Kube context not set.")
 		}
 	}
-	if ctx.String("audit") == "" {
+	if ctx.String("audit") != "true" {
 		clusterConfig, err = utils.ReadClusterConfig(ctx.String("cluster-config-path"))
 		if err != nil {
 			return fmt.Errorf("Error reading cluster config: %v", err)
