@@ -1,0 +1,13 @@
+name: cluster2-lab
+helm:
+  log: 0
+  debug: true
+  repos:
+    - name: stable
+      url: https://kubernetes-charts.storage.googleapis.com/
+releases:
+  - name: istio-base
+    namespace: kube-system
+    version: ~x.x.x
+    chartPath: "./downloads/istio-1.6.0/manifests/charts/base"
+    chartsSource: "https://github.com/istio/istio/releases/download/1.6.0/istio-1.6.0-linux-amd64.tar.gz"

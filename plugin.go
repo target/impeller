@@ -274,7 +274,7 @@ func (p *Plugin) downloadCharts(release *types.Release) (string, error) {
 
 	if _, err := os.Stat(tarFilePath); err != nil || os.IsExist(err) {
 		log.Println("Downloading:", tarFilePath)
-		cmd := exec.Command(constants.WgetBin, "-q", "-n", "-P", "./downloads", release.ChartsSource)
+		cmd := exec.Command(constants.WgetBin, "-P", "./downloads", release.ChartsSource)
 		if err := utils.Run(cmd, true); err != nil {
 			return "", fmt.Errorf("Error extracting Charts archive: %v", err)
 		}
