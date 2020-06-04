@@ -265,6 +265,12 @@ func (p *Plugin) fetchChart(release *types.Release) error {
 
 func (p *Plugin) downloadCharts(release *types.Release) (string, error) {
 
+	if _, err := os.Stat("./downloads"); os.IsNotExist(err) {
+		err := os.Mkdir("./downloads", 0755)
+		if err != nil {
+			return "", fmt.Errorf("error creting ./downloads folder: %s", err)
+		}
+	}
 	url, err := url.Parse(release.ChartsSource)
 	if err != nil {
 		return "", fmt.Errorf("error parsing charts url: %s", err)
