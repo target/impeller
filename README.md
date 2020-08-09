@@ -125,6 +125,7 @@ releases:
     namespace: kube-system  # Specify the namespace where to install
     version: 0.7.0  # Specify the version of the chart to install
     deploymentMethod: helm # Specify how the chart should be installed ("helm" or "kubectl")
+    history: 3  # Optional; sets the --history-max flag for the "helm" deployment method
   - name: my-chart
     chartPath: private-repo/my-chart
     namespace: kube-system
