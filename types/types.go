@@ -24,6 +24,7 @@ type Release struct {
 	Version          string     `yaml:"version"`
 	ChartPath        string     `yaml:"chartPath"`
 	ChartsSource     string     `yaml:"chartsSource"`
+	History          uint       `yaml:history`
 	Overrides        []Override `yaml:"overrides,omitempty"`
 	Namespace        string     `yaml:"namespace,omitempty"`
 	ValueFiles       []string   `yaml:"valueFiles,omitempty"`
