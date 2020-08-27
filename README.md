@@ -112,6 +112,7 @@ clusters/my-cluster-name.yaml:
 ```yaml
 name: my-cluster-name  # This is used to find cluster-specific override files
 helm:
+  defaultHistory: 3  # Optional; sets the --history-max flag for the "helm" deployment method on all releases
   log: 5 # specifies log level
   debug: flase # enables debug level logging
   repos:  # Make Helm aware of any repos you want to use
@@ -125,7 +126,7 @@ releases:
     namespace: kube-system  # Specify the namespace where to install
     version: 0.7.0  # Specify the version of the chart to install
     deploymentMethod: helm # Specify how the chart should be installed ("helm" or "kubectl")
-    history: 3  # Optional; sets the --history-max flag for the "helm" deployment method
+    history: 3  # Optional; sets the --history-max flag for the "helm" deployment method for this release
   - name: my-chart
     chartPath: private-repo/my-chart
     namespace: kube-system

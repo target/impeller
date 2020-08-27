@@ -37,6 +37,7 @@ type Override struct {
 
 type HelmConfig struct {
 	Upgrade        bool              `yaml:"upgrade"`
+	DefaultHistory uint              `yaml:"defaultHistory"`
 	Debug          bool              `yaml:"debug"`
 	LogLevel       uint              `yaml:"log"`
 	ServiceAccount string            `yaml:"serviceAccount"`
