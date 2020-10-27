@@ -1,6 +1,6 @@
 FROM golang:1.12-alpine as builder
-ENV DESIRED_VERSION=v3.2.3
-ENV HELM_DIFF_VERSION=v3.1.1
+ENV DESIRED_VERSION=v3.4.0
+ENV HELM_DIFF_VERSION=v3.1.3
 WORKDIR /go/src/github.com/target/impeller
 COPY . .
 ENV GO111MODULE=on
