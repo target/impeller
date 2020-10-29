@@ -331,7 +331,7 @@ func (p *Plugin) setupKubeconfig() error {
 	// WARNING: this may overwrite your config if it already exists.
 	if p.KubeConfig != "" {
 		log.Println("Creating Kubernetes config")
-		if err := ioutil.WriteFile(kubeConfig, []byte(p.KubeConfig), 0644); err != nil {
+		if err := ioutil.WriteFile(kubeConfig, []byte(p.KubeConfig), 0600); err != nil {
 			return fmt.Errorf("Error creating kube config file: %v", err)
 		}
 	}
