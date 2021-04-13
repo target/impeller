@@ -7,6 +7,7 @@ ENV GO111MODULE=on
 ENV CGO_ENABLED=0
 ENV GOOS=linux
 RUN apk add --no-cache git && \
+    go mod vendor && \
     go build -mod vendor -a -installsuffix cgo -ldflags '-extldflags "-static"' -o impeller . && \
     go test -coverprofile cp.out
 RUN apk add --update openssl && \
