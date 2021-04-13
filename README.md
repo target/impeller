@@ -28,7 +28,7 @@ Manages Helm charts running in Kubernetes clusters.
 `impeller --cluster-config-path=./clusters/my-cluster.yaml --kube-config="$(cat ~/.kube/config)" --kube-context my-kubernetes-context`
 2. Dry run command:
 `impeller --cluster-config-path=./clusters/my-cluster.yaml --kube-config="$(cat ~/.kube/config)" --kube-context my-kubernetes-context --dry-run`
-By default override values are hidden with `--dry-run` option. You can add `showValue: true` to your release to enable:
+By default override values are hidden with `--dry-run` option. You can add `showValue: true` to your release to enable printout:
 ```
 releases:
   - name: test-release
