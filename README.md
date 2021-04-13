@@ -28,6 +28,17 @@ Manages Helm charts running in Kubernetes clusters.
 `impeller --cluster-config-path=./clusters/my-cluster.yaml --kube-config="$(cat ~/.kube/config)" --kube-context my-kubernetes-context`
 1. Dry run command:
 `impeller --cluster-config-path=./clusters/my-cluster.yaml --kube-config="$(cat ~/.kube/config)" --kube-context my-kubernetes-context --dry-run`
+- By default override values are hidden with `--dry-run` option. You can add `showValue: true` to your release to enable:
+```
+releases:
+  - name: test-release
+    namespace: kube-system
+    version: ~x.x.x
+    overrides:
+      - target: global.tag
+        showValue: true
+        value: 1.6.0
+```
 1. Diff run command:
 `impeller --cluster-config-path=./clusters/my-cluster.yaml --kube-config="$(cat ~/.kube/config)" --kube-context my-kubernetes-context --diff-run`
 1. Generate Audit report file:
@@ -163,5 +174,4 @@ releases:
     version: ~x.x.x
     chartPath: "./downloads/istio-1.6.0/manifests/charts/base"
     chartsSource: "https://github.com/istio/istio/releases/download/1.6.0/istio-1.6.0-linux-amd64.tar.gz"
-
 ```

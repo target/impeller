@@ -48,6 +48,7 @@ type HelmConfig struct {
 type Value struct {
 	Value     *string    `yaml:"value,omitempty"`
 	ValueFrom *ValueFrom `yaml:"valueFrom,omitempty"`
+	ShowValue bool       `yaml:"showValue"`
 }
 
 func (v Value) GetValue() (string, error) {

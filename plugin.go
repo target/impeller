@@ -384,9 +384,8 @@ func (p *Plugin) overrides(release *types.Release) (args []commandbuilder.Arg) {
 			Name:  "f",
 			Value: path})
 	}
-
+	isSecret := true
 	// Handle individual value overrides
-	setValues := []string{}
 	for _, override := range release.Overrides {
 		log.Println("Overriding value for:", override.Target)
 		overrideValue, err := override.GetValue()
@@ -397,14 +396,15 @@ func (p *Plugin) overrides(release *types.Release) (args []commandbuilder.Arg) {
 		if overrideValue == "" {
 			log.Println("WARNING: Override value is blank.")
 		}
-		setValues = append(setValues, fmt.Sprintf("%s=%s", override.Target, overrideValue))
-	}
-	if len(setValues) > 0 {
+		if override.ShowValue {
+			isSecret = false
+		}
 		args = append(args, commandbuilder.Arg{
 			Type:        commandbuilder.ArgTypeLongParam,
 			Name:        "set",
-			Value:       strings.Join(setValues, ","),
-			ValueSecret: true})
+			Value:       fmt.Sprintf("%s=%s", override.Target, overrideValue),
+			ValueSecret: isSecret})
 	}
+
 	return args
 }
