@@ -46,6 +46,28 @@ func TestOverridesIndividualOverrides(t *testing.T) {
 	assert.True(t, overrides[0].ValueSecret)
 }
 
+func TestOverridesIndividualOverridesPrint(t *testing.T) {
+	override := "test"
+	p := &Plugin{}
+	release := &types.Release{
+		Overrides: []types.Override{
+			types.Override{
+				Target: "image.tag",
+				Value: types.Value{
+					Value:     &override,
+					ShowValue: true,
+				},
+			},
+		},
+	}
+
+	overrides := p.overrides(release)
+	require.Len(t, overrides, 1)
+	assert.Equal(t, "set", overrides[0].Name)
+	assert.Equal(t, "image.tag=test", overrides[0].Value)
+	assert.False(t, overrides[0].ValueSecret)
+}
+
 func TestPlugin_ExecReport(t *testing.T) {
 	p := Plugin{
 		ClusterConfigPath: "./test-clusters",

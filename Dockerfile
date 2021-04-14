@@ -1,12 +1,15 @@
-FROM golang:1.12-alpine as builder
+FROM golang:1.15-alpine as builder
 ENV DESIRED_VERSION=v3.5.3
 ENV HELM_DIFF_VERSION=v3.1.3
 WORKDIR /go/src/github.com/target/impeller
 COPY . .
 ENV GO111MODULE=on
+ENV CGO_ENABLED=0
+ENV GOOS=linux
 RUN apk add --no-cache git && \
-    go get -d ./... && \
-    go build
+    go mod vendor && \
+    go build -mod vendor -a -installsuffix cgo -ldflags '-extldflags "-static"' -o impeller . && \
+    go test -coverprofile cp.out
 RUN apk add --update openssl && \
     rm -rf /var/cache/apk/*
 RUN apk update && apk add bash git openssh
@@ -17,7 +20,7 @@ RUN cd /tmp && \
     && ./get_helm.sh
 RUN /usr/local/bin/helm plugin install https://github.com/databus23/helm-diff --version ${HELM_DIFF_VERSION}
 
-FROM alpine:3.10.3
+FROM alpine:latest
 ENV KUBECTL_VERSION=v1.18.17
 RUN apk add ca-certificates
 RUN wget -O /usr/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl && \
