@@ -191,13 +191,9 @@ func (p *Plugin) installAddonViaHelm(release *types.Release) error {
 	if release.ChartsSource != "" {
 		log.Println("Charts Source defined for:", release.Name)
 
-		tarFileName, err := p.downloadCharts(release)
+		_, err := p.downloadCharts(release)
 		if err != nil {
 			return fmt.Errorf("error downloading charts: %s", err)
-		}
-		err = p.extractCharts(tarFileName)
-		if err != nil {
-			return fmt.Errorf("error extracting charts archive: %s", err)
 		}
 	}
 	// Add Overrides
@@ -288,6 +284,10 @@ func (p *Plugin) downloadCharts(release *types.Release) (string, error) {
 		cmd := exec.Command(constants.WgetBin, "-P", "./downloads", release.ChartsSource)
 		if err := utils.Run(cmd, true); err != nil {
 			return "", fmt.Errorf("Error extracting Charts archive: %v", err)
+		}
+		err = p.extractCharts(tarFilePath)
+		if err != nil {
+			return tarFilePath, err
 		}
 	} else {
 		log.Println("File exist, skipping download:", tarFilePath)
