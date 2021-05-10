@@ -12,7 +12,7 @@ RUN apk add --no-cache git && \
     go test -v -coverprofile cp.out
 RUN apk add --update openssl && \
     rm -rf /var/cache/apk/*
-RUN apk update && apk add baßsh git openssh
+RUN apk update && apk add bash git openssh
 RUN apk add ca-certificates
 RUN cd /tmp && \
     wget -O get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 \
