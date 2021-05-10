@@ -9,7 +9,7 @@ ENV GOOS=linux
 RUN apk add --no-cache git && \
     go mod vendor && \
     go build -mod vendor -a -installsuffix cgo -ldflags '-extldflags "-static"' -o impeller . && \
-    go test -coverprofile cp.out
+    go test -v -coverprofile cp.out
 RUN apk add --update openssl && \
     rm -rf /var/cache/apk/*
 RUN apk update && apk add bash git openssh
