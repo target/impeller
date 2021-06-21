@@ -175,3 +175,40 @@ releases:
     chartPath: "./downloads/istio-1.6.0/manifests/charts/base"
     chartsSource: "https://github.com/istio/istio/releases/download/1.6.0/istio-1.6.0-linux-amd64.tar.gz"
 ```
+
+## Additional examples
+
+### Override values with environment variables
+Override a single value using Helm's `--set` feature.
+
+Add the following release to your cluster YAML file:
+```yaml
+- name: release-name
+  namespace: default
+  version: 1.0.0
+  chartPath: repo/chart-name
+  overrides:
+    - target: tls.key
+      showValue: false
+      valueFrom:
+        environment: KEY
+```
+
+If you set `showValue` to `true`, the value of the environment variable will logged to `stdout` for debugging purposes. By default, the value is redacted.
+
+### Override values with files
+Override a single value from a file using Helm's `--set-file` feature.
+
+Add the following release to your cluster YAML file:
+```yaml
+- name: release-name
+  namespace: default
+  version: 1.0.0
+  chartPath: repo/chart-name
+  overrides:
+    - target: tls.key
+      valueFrom:
+        file: /path/to/key
+```
+
+Because the value is not logged, `showValue` has no effect when setting values from file. The file path is always logged to `stdout`.
