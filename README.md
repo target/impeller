@@ -178,8 +178,42 @@ releases:
 
 ## Additional examples
 
+### Setup cluster file to setup helm repos only once
+
+You have an option to skip setting up Helm Repo's by setting `SkipSetupHelmRepo` to `true` in the cluster configuration file.
+This is useful when you run multiple cluster deployment in parallel and want to configure helm repos only once.
+1. Setup file with only helm repos used in all other cluster files, example:
+```yaml
+name: setup-helm-repos  # This is used to find cluster-specific override files
+helm:
+  SkipSetupHelmRepo: false
+  defaultHistory: 3  # Optional; sets the --history-max flag for the "helm" deployment method on all releases
+  log: 5 # specifies log level
+  debug: flase # enables debug level logging
+  repos:  # Make Helm aware of any repos you want to use
+    - name: stable
+      url: https://kubernetes-charts.storage.googleapis.com/
+    - name: private-repo
+      url: https://example.com/my-private-repo/
+releases: 
+```
+2. Set  helm repos used in all other cluster files to `repos: {}`, example:
+
+
+```yaml
+name: my-cluster-name1  # This is used to find cluster-specific override files
+helm:
+  SkipSetupHelmRepo: true
+  defaultHistory: 3  # Optional; sets the --history-max flag for the "helm" deployment method on all releases
+  log: 5 # specifies log level
+  debug: flase # enables debug level logging
+  repos: {} # Make Helm aware of any repos you want to use
+releases: 
+```
+
 ### Override values with environment variables
 Override a single value using Helm's `--set` feature.
+
 
 Add the following release to your cluster YAML file:
 ```yaml

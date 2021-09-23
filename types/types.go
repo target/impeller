@@ -10,9 +10,10 @@ import (
 )
 
 type ClusterConfig struct {
-	Name     string     `yaml:"name"`
-	Releases []Release  `yaml:"releases"`
-	Helm     HelmConfig `yaml:"helm"`
+	Name              string     `yaml:"name"`
+	Releases          []Release  `yaml:"releases"`
+	Helm              HelmConfig `yaml:"helm"`
+	SkipSetupHelmRepo bool       `yaml:"skipSetupHelmRepo"`
 }
 
 type HelmRepo struct {

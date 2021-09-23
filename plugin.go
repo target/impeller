@@ -45,13 +45,17 @@ func (p *Plugin) Exec() error {
 			return fmt.Errorf("Error initializing Kubernetes config: %v", err)
 		}
 		// Add configured repos
-		for _, repo := range p.ClusterConfig.Helm.Repos {
-			if err := p.addHelmRepo(repo); err != nil {
-				return fmt.Errorf("Error adding Helm repo: %v", err)
+		if !p.ClusterConfig.SkipSetupHelmRepo {
+			for _, repo := range p.ClusterConfig.Helm.Repos {
+				if err := p.addHelmRepo(repo); err != nil {
+					return fmt.Errorf("Error adding Helm repo: %v", err)
+				}
 			}
-		}
-		if err := p.updateHelmRepos(); err != nil {
-			return fmt.Errorf("Error updating Helm repos: %v", err)
+			if err := p.updateHelmRepos(); err != nil {
+				return fmt.Errorf("Error updating Helm repos: %v", err)
+			}
+		} else {
+			log.Println("Skipping setting up Helm repos...")
 		}
 
 		// Install addons
@@ -272,11 +276,11 @@ func (p *Plugin) downloadCharts(release *types.Release) (string, error) {
 			return "", fmt.Errorf("error creting ./downloads folder: %s", err)
 		}
 	}
-	url, err := url.Parse(release.ChartsSource)
+	myUrl, err := url.Parse(release.ChartsSource)
 	if err != nil {
-		return "", fmt.Errorf("error parsing charts url: %s", err)
+		return "", fmt.Errorf("error parsing charts myUrl: %s", err)
 	}
-	splits := strings.Split(url.Path, "/")
+	splits := strings.Split(myUrl.Path, "/")
 	tarFilePath := "./downloads/" + splits[len(splits)-1]
 
 	if _, err := os.Stat(tarFilePath); err != nil || os.IsExist(err) {
