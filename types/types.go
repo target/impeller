@@ -48,14 +48,15 @@ func (o Override) BuildArg() (*commandbuilder.Arg, error) {
 }
 
 type HelmConfig struct {
-	Upgrade           bool              `yaml:"upgrade"`
-	SkipSetupHelmRepo bool              `yaml:"skipSetupHelmRepo"`
-	DefaultHistory    uint              `yaml:"defaultHistory"`
-	Debug             bool              `yaml:"debug"`
-	LogLevel          uint              `yaml:"log"`
-	ServiceAccount    string            `yaml:"serviceAccount"`
-	Repos             []HelmRepo        `yaml:"repos"`
-	Overrides         map[string]string `yaml:"overrides"`
+	Upgrade             bool              `yaml:"upgrade"`
+	SkipSetupHelmRepo   bool              `yaml:"skipSetupHelmRepo"`
+	SkipSetupKubeConfig bool              `yaml:"skipSetupKubeConfig"`
+	DefaultHistory      uint              `yaml:"defaultHistory"`
+	Debug               bool              `yaml:"debug"`
+	LogLevel            uint              `yaml:"log"`
+	ServiceAccount      string            `yaml:"serviceAccount"`
+	Repos               []HelmRepo        `yaml:"repos"`
+	Overrides           map[string]string `yaml:"overrides"`
 }
 
 type Value struct {

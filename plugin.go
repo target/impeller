@@ -40,9 +40,13 @@ type Plugin struct {
 
 func (p *Plugin) Exec() error {
 	if !p.Audit {
-		// Init Kubernetes config
-		if err := p.setupKubeconfig(); err != nil {
-			return fmt.Errorf("Error initializing Kubernetes config: %v", err)
+		if !p.ClusterConfig.Helm.SkipSetupKubeConfig {
+			// Init Kubernetes config
+			if err := p.setupKubeconfig(); err != nil {
+				return fmt.Errorf("Error initializing Kubernetes config: %v", err)
+			}
+		} else {
+			log.Println("Skipping setting up kubeconfig...")
 		}
 		// Add configured repos
 		if !p.ClusterConfig.Helm.SkipSetupHelmRepo {
@@ -57,11 +61,12 @@ func (p *Plugin) Exec() error {
 		} else {
 			log.Println("Skipping setting up Helm repos...")
 		}
-
-		// Install addons
-		for _, addon := range p.ClusterConfig.Releases {
-			if err := p.installAddon(&addon); err != nil {
-				return fmt.Errorf("Error installing addon \"%s\": %v", addon.Name, err)
+		if !p.ClusterConfig.Helm.SkipSetupKubeConfig {
+			// Install addons
+			for _, addon := range p.ClusterConfig.Releases {
+				if err := p.installAddon(&addon); err != nil {
+					return fmt.Errorf("Error installing addon \"%s\": %v", addon.Name, err)
+				}
 			}
 		}
 	} else {
