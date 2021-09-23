@@ -45,7 +45,7 @@ func (p *Plugin) Exec() error {
 			return fmt.Errorf("Error initializing Kubernetes config: %v", err)
 		}
 		// Add configured repos
-		if !p.ClusterConfig.SkipSetupHelmRepo {
+		if !p.ClusterConfig.Helm.SkipSetupHelmRepo {
 			for _, repo := range p.ClusterConfig.Helm.Repos {
 				if err := p.addHelmRepo(repo); err != nil {
 					return fmt.Errorf("Error adding Helm repo: %v", err)
