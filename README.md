@@ -186,7 +186,7 @@ This is useful when you run multiple cluster deployment in parallel and want to 
 ```yaml
 name: setup-helm-repos  # This is used to find cluster-specific override files
 helm:
-  SkipSetupHelmRepo: false
+  skipSetupHelmRepo: false # Optional;
   defaultHistory: 3  # Optional; sets the --history-max flag for the "helm" deployment method on all releases
   log: 5 # specifies log level
   debug: flase # enables debug level logging
@@ -203,7 +203,7 @@ releases:
 ```yaml
 name: my-cluster-name1  # This is used to find cluster-specific override files
 helm:
-  SkipSetupHelmRepo: true
+  skipSetupHelmRepo: true # Optional;
   defaultHistory: 3  # Optional; sets the --history-max flag for the "helm" deployment method on all releases
   log: 5 # specifies log level
   debug: flase # enables debug level logging
