@@ -10,10 +10,9 @@ import (
 )
 
 type ClusterConfig struct {
-	Name              string     `yaml:"name"`
-	Releases          []Release  `yaml:"releases"`
-	Helm              HelmConfig `yaml:"helm"`
-	SkipSetupHelmRepo bool       `yaml:"skipSetupHelmRepo"`
+	Name     string     `yaml:"name"`
+	Releases []Release  `yaml:"releases"`
+	Helm     HelmConfig `yaml:"helm"`
 }
 
 type HelmRepo struct {
@@ -49,13 +48,14 @@ func (o Override) BuildArg() (*commandbuilder.Arg, error) {
 }
 
 type HelmConfig struct {
-	Upgrade        bool              `yaml:"upgrade"`
-	DefaultHistory uint              `yaml:"defaultHistory"`
-	Debug          bool              `yaml:"debug"`
-	LogLevel       uint              `yaml:"log"`
-	ServiceAccount string            `yaml:"serviceAccount"`
-	Repos          []HelmRepo        `yaml:"repos"`
-	Overrides      map[string]string `yaml:"overrides"`
+	Upgrade           bool              `yaml:"upgrade"`
+	SkipSetupHelmRepo bool              `yaml:"skipSetupHelmRepo"`
+	DefaultHistory    uint              `yaml:"defaultHistory"`
+	Debug             bool              `yaml:"debug"`
+	LogLevel          uint              `yaml:"log"`
+	ServiceAccount    string            `yaml:"serviceAccount"`
+	Repos             []HelmRepo        `yaml:"repos"`
+	Overrides         map[string]string `yaml:"overrides"`
 }
 
 type Value struct {
