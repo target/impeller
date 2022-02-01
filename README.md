@@ -1,7 +1,7 @@
 # impeller
 
 Manages Helm charts running in Kubernetes clusters.
-
+[![CI-dev-pipeline](https://github.com/target/impeller/actions/workflows/ci-dev-pipeline.yaml/badge.svg)](https://github.com/target/impeller/actions/workflows/ci-dev-pipeline.yaml)
 [![Publish Docker image](https://github.com/target/impeller/actions/workflows/docker-image.yml/badge.svg)](https://github.com/target/impeller/actions/workflows/docker-image.yml)
 [![Docker Hub](https://img.shields.io/docker/pulls/target/impeller.svg)](https://hub.docker.com/r/target/impeller)
 [![Latest Release](https://img.shields.io/github/release/target/impeller.svg)](https://github.com/target/impeller/releases)
