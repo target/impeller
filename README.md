@@ -2,6 +2,7 @@
 
 Manages Helm charts running in Kubernetes clusters.
 
+[![Publish Docker image](https://github.com/target/impeller/actions/workflows/docker-image.yml/badge.svg)](https://github.com/target/impeller/actions/workflows/docker-image.yml)
 [![Docker Hub](https://img.shields.io/docker/pulls/target/impeller.svg)](https://hub.docker.com/r/target/impeller)
 [![Latest Release](https://img.shields.io/github/release/target/impeller.svg)](https://github.com/target/impeller/releases)
 [![MIT License](https://img.shields.io/github/license/target/impeller.svg)](https://github.com/target/impeller/blob/master/LICENSE)
@@ -195,7 +196,7 @@ helm:
       url: https://kubernetes-charts.storage.googleapis.com/
     - name: private-repo
       url: https://example.com/my-private-repo/
-releases: 
+releases:
 ```
 2. Set  helm repos used in all other cluster files to `repos: {}`, example:
 
@@ -208,7 +209,7 @@ helm:
   log: 5 # specifies log level
   debug: flase # enables debug level logging
   repos: {} # Make Helm aware of any repos you want to use
-releases: 
+releases:
 ```
 
 ### Override values with environment variables
