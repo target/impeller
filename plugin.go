@@ -179,6 +179,10 @@ func (p *Plugin) installAddonViaHelm(release *types.Release) error {
 		} else if p.ClusterConfig.Helm.DefaultHistory > 0 {
 			cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeLongParam, Name: "history-max", Value: fmt.Sprint(p.ClusterConfig.Helm.DefaultHistory)})
 		}
+
+		if p.ClusterConfig.Helm.Force {
+			cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: "--force"})
+		}
 	}
 	cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: release.Name})
 	cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: release.ChartPath})
@@ -187,10 +191,6 @@ func (p *Plugin) installAddonViaHelm(release *types.Release) error {
 
 	if p.ClusterConfig.Helm.Debug {
 		cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: "--debug"})
-	}
-
-	if p.ClusterConfig.Helm.Force {
-		cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: "--force"})
 	}
 
 	// Add namespaces to command
