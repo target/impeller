@@ -32,6 +32,7 @@ type Release struct {
 	Overrides        []Override `yaml:"overrides,omitempty"`
 	Namespace        string     `yaml:"namespace,omitempty"`
 	ValueFiles       []string   `yaml:"valueFiles,omitempty"`
+	Force            bool       `yaml:"force"`
 }
 
 type Override struct {
