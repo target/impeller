@@ -2,6 +2,7 @@ name: cluster2-lab
 helm:
   log: 0
   debug: true
+  Force: true
   repos:
     - name: stable
       url: https://kubernetes-charts.storage.googleapis.com/
