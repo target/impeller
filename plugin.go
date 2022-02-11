@@ -180,7 +180,8 @@ func (p *Plugin) installAddonViaHelm(release *types.Release) error {
 			cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeLongParam, Name: "history-max", Value: fmt.Sprint(p.ClusterConfig.Helm.DefaultHistory)})
 		}
 
-		if p.ClusterConfig.Helm.Force {
+		if release.Force {
+			log.Println("Running with Force:", release.Name)
 			cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: "--force"})
 		}
 	}

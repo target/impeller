@@ -32,6 +32,7 @@ type Release struct {
 	Overrides        []Override `yaml:"overrides,omitempty"`
 	Namespace        string     `yaml:"namespace,omitempty"`
 	ValueFiles       []string   `yaml:"valueFiles,omitempty"`
+	Force            bool       `yaml:"force"`
 }
 
 type Override struct {
@@ -53,7 +54,6 @@ type HelmConfig struct {
 	SkipSetupKubeConfig bool              `yaml:"skipSetupKubeConfig"`
 	DefaultHistory      uint              `yaml:"defaultHistory"`
 	Debug               bool              `yaml:"debug"`
-	Force               bool              `yaml:"force"`
 	LogLevel            uint              `yaml:"log"`
 	ServiceAccount      string            `yaml:"serviceAccount"`
 	Repos               []HelmRepo        `yaml:"repos"`

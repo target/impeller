@@ -2,7 +2,6 @@ name: cluster2-lab
 helm:
   log: 0
   debug: true
-  force: true
   repos:
     - name: stable
       url: https://charts.helm.sh/stable
@@ -12,3 +11,9 @@ releases:
     version: ~x.x.x
     chartPath: "./downloads/istio-1.11.5/manifests/charts/base"
     chartsSource: "https://github.com/istio/istio/releases/download/1.11.5/istio-1.11.5-linux-amd64.tar.gz"
+  - name: istio-base-force
+    namespace: kube-system
+    version: ~x.x.x
+    chartPath: "./downloads/istio-1.11.5/manifests/charts/base"
+    chartsSource: "https://github.com/istio/istio/releases/download/1.11.5/istio-1.11.5-linux-amd64.tar.gz"
+    force: true

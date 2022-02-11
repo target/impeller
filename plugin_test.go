@@ -76,6 +76,7 @@ func TestPlugin_ExecReport(t *testing.T) {
 		KubeConfig:        "",
 		KubeContext:       "",
 		Dryrun:            false,
+		Force              false,
 		Diffrun:           false,
 		Audit:             true,
 		AuditFile:         "./go-test.csv",
