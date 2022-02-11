@@ -189,6 +189,10 @@ func (p *Plugin) installAddonViaHelm(release *types.Release) error {
 		cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: "--debug"})
 	}
 
+	if p.ClusterConfig.Helm.Force {
+		cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: "--force"})
+	}
+
 	// Add namespaces to command
 	if release.Namespace != "" {
 		cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeLongParam, Name: "namespace", Value: release.Namespace})
