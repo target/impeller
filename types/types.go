@@ -53,6 +53,7 @@ type HelmConfig struct {
 	SkipSetupKubeConfig bool              `yaml:"skipSetupKubeConfig"`
 	DefaultHistory      uint              `yaml:"defaultHistory"`
 	Debug               bool              `yaml:"debug"`
+	Force								bool							`yaml:"force"`
 	LogLevel            uint              `yaml:"log"`
 	ServiceAccount      string            `yaml:"serviceAccount"`
 	Repos               []HelmRepo        `yaml:"repos"`
