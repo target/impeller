@@ -4,16 +4,10 @@ helm:
   debug: true
   repos:
     - name: stable
-      url: https://charts.helm.sh/stable
+      url: https://kubernetes-charts.storage.googleapis.com/
 releases:
   - name: istio-base
     namespace: kube-system
     version: ~x.x.x
-    chartPath: "./downloads/istio-1.11.5/manifests/charts/base"
-    chartsSource: "https://github.com/istio/istio/releases/download/1.11.5/istio-1.11.5-linux-amd64.tar.gz"
-  - name: istio-ingress
-    namespace: kube-system
-    version: ~x.x.x
-    chartPath: "./downloads/istio-1.11.5/manifests/charts/gateways/istio-ingress"
-    chartsSource: "https://github.com/istio/istio/releases/download/1.11.5/istio-1.11.5-linux-amd64.tar.gz"
-    force: true
+    chartPath: "./downloads/istio-1.6.0/manifests/charts/base"
+    chartsSource: "https://github.com/istio/istio/releases/download/1.6.0/istio-1.6.0-linux-amd64.tar.gz"
