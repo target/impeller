@@ -21,7 +21,7 @@ RUN cd /tmp && \
 RUN /usr/local/bin/helm plugin install https://github.com/databus23/helm-diff --version ${HELM_DIFF_VERSION}
 
 FROM alpine:latest
-ENV KUBECTL_VERSION=v1.23.2
+ENV KUBECTL_VERSION=v1.23.4
 RUN apk add ca-certificates
 RUN wget -O /usr/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl && \
     chmod +x /usr/bin/kubectl
