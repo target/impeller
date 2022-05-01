@@ -32,7 +32,7 @@ func (cb *CommandBuilder) Command() *exec.Cmd {
 	for _, arg := range cb.Parts {
 		args = append(args, arg.UnsafeParts()...)
 	}
-
+	log.Printf("RUNNING: %s", cb.SafeString())
 	return exec.Command(cb.Name, args...)
 }
 
@@ -41,7 +41,6 @@ func (cb *CommandBuilder) Add(args ...Arg) {
 }
 
 func (cb *CommandBuilder) Run() error {
-	log.Printf("RUNNING: %s", cb.SafeString())
 	cmd := cb.Command()
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
