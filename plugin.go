@@ -7,7 +7,6 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
 
 	"github.com/target/impeller/constants"
@@ -43,7 +42,7 @@ func (p *Plugin) Exec() error {
 		if !p.ClusterConfig.Helm.SkipSetupKubeConfig {
 			// Init Kubernetes config
 			if err := p.setupKubeconfig(); err != nil {
-				return fmt.Errorf("Error initializing Kubernetes config: %v", err)
+				return fmt.Errorf("error initializing Kubernetes config: %v", err)
 			}
 		} else {
 			log.Println("Skipping setting up kubeconfig...")
@@ -52,11 +51,11 @@ func (p *Plugin) Exec() error {
 		if !p.ClusterConfig.Helm.SkipSetupHelmRepo {
 			for _, repo := range p.ClusterConfig.Helm.Repos {
 				if err := p.addHelmRepo(repo); err != nil {
-					return fmt.Errorf("Error adding Helm repo: %v", err)
+					return fmt.Errorf("error adding Helm repo: %v", err)
 				}
 			}
 			if err := p.updateHelmRepos(); err != nil {
-				return fmt.Errorf("Error updating Helm repos: %v", err)
+				return fmt.Errorf("error updating Helm repos: %v", err)
 			}
 		} else {
 			log.Println("Skipping setting up Helm repos...")
@@ -65,7 +64,7 @@ func (p *Plugin) Exec() error {
 			// Install addons
 			for _, addon := range p.ClusterConfig.Releases {
 				if err := p.installAddon(&addon); err != nil {
-					return fmt.Errorf("Error installing addon \"%s\": %v", addon.Name, err)
+					return fmt.Errorf("error installing addon \"%s\": %v", addon.Name, err)
 				}
 			}
 		}
@@ -75,7 +74,7 @@ func (p *Plugin) Exec() error {
 		for cluster := range p.ClustersList.ClusterList {
 			clusterConfig, err := utils.ReadClusterConfig(p.ClusterConfigPath + "/" + cluster)
 			if err != nil {
-				return fmt.Errorf("Error reading cluster config: %v", err)
+				return fmt.Errorf("error reading cluster config: %v", err)
 			}
 
 			for _, addon := range clusterConfig.Releases {
@@ -112,7 +111,7 @@ func (p *Plugin) addHelmRepo(repo types.HelmRepo) error {
 	if repo.Username != nil {
 		username, err := repo.Username.GetValue()
 		if err != nil {
-			return fmt.Errorf("Could not get username for repo: %v", err)
+			return fmt.Errorf("could not get username for repo: %v", err)
 		}
 		cb.Add(commandbuilder.Arg{
 			Type:        commandbuilder.ArgTypeLongParam,
@@ -125,7 +124,7 @@ func (p *Plugin) addHelmRepo(repo types.HelmRepo) error {
 	if repo.Password != nil {
 		password, err := repo.Password.GetValue()
 		if err != nil {
-			return fmt.Errorf("Could not get password for repo: %v", err)
+			return fmt.Errorf("could not get password for repo: %v", err)
 		}
 		cb.Add(commandbuilder.Arg{
 			Type:        commandbuilder.ArgTypeLongParam,
@@ -136,7 +135,7 @@ func (p *Plugin) addHelmRepo(repo types.HelmRepo) error {
 	}
 
 	if err := cb.Run(); err != nil {
-		return fmt.Errorf("Could not add repo \"%s\": %v", repo.Name, err)
+		return fmt.Errorf("could not add repo \"%s\": %v", repo.Name, err)
 	}
 	return nil
 }
@@ -145,7 +144,7 @@ func (p *Plugin) updateHelmRepos() error {
 	log.Println("Updating Helm repos")
 	cmd := exec.Command(constants.HelmBin, "repo", "update")
 	if err := utils.Run(cmd, true); err != nil {
-		return fmt.Errorf("Error updating helm repos: %v", err)
+		return fmt.Errorf("error updating helm repos: %v", err)
 	}
 	return nil
 }
@@ -218,7 +217,7 @@ func (p *Plugin) installAddonViaHelm(release *types.Release) error {
 
 	// Execute helm upgrade
 	if err := cb.Run(); err != nil {
-		return fmt.Errorf("Error running helm: %v", err)
+		return fmt.Errorf("error running helm: %v", err)
 	}
 	return nil
 }
@@ -227,25 +226,25 @@ func (p *Plugin) installAddonViaHelm(release *types.Release) error {
 // helm fetch --version release.Version --untar release.ChartPath
 // helm template $CHART | kubectl create -f -
 func (p *Plugin) installAddonViaKubectl(release *types.Release) error {
-	if err := p.fetchChart(release); err != nil {
-		return fmt.Errorf("error fetching chart for kubectl deployment: %s", err)
-	}
-
 	renderedManifests, err := p.templateChart(release)
 	if err != nil {
 		return fmt.Errorf("error rendering chart for kubectl apply: %s", err)
 	}
 
+	cb := commandbuilder.CommandBuilder{Name: constants.KubectlBin}
+	// kubectl apply -f -
+	if release.Namespace != "" {
+		cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeLongParam, Name: "namespace", Value: release.Namespace})
+	}
+	cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeLongParam, Name: "context", Value: p.KubeContext})
+
+	cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: "apply"})
 	// Dry Run
 	if p.Dryrun {
 		log.Println("Running Dry run:", release.Name)
-		fmt.Printf("rendered chart output:\n%s", renderedManifests)
-		return nil
+		cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: "--dry-run=server"})
 	}
 
-	cb := commandbuilder.CommandBuilder{Name: constants.KubectlBin}
-	// kubectl apply -f -
-	cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: "apply"})
 	cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeLongParam, Name: "filename", Value: "-"})
 
 	// Grab raw commandbuilder command so we can set stdin
@@ -292,7 +291,7 @@ func (p *Plugin) downloadCharts(release *types.Release) (string, error) {
 		log.Println("Downloading:", tarFilePath)
 		cmd := exec.Command(constants.WgetBin, "-P", "./downloads", release.ChartsSource)
 		if err := utils.Run(cmd, true); err != nil {
-			return "", fmt.Errorf("Error extracting Charts archive: %v", err)
+			return "", fmt.Errorf("error extracting Charts archive: %v", err)
 		}
 		err = p.extractCharts(tarFilePath)
 		if err != nil {
@@ -307,25 +306,22 @@ func (p *Plugin) downloadCharts(release *types.Release) (string, error) {
 func (p *Plugin) extractCharts(archiveName string) error {
 	cmd := exec.Command(constants.TarBin, "-xzf", archiveName, "-C", "./downloads")
 	if err := utils.Run(cmd, true); err != nil {
-		return fmt.Errorf("Error extracting Charts archive: %v", err)
+		return fmt.Errorf("error extracting Charts archive: %v", err)
 	}
 	return nil
 }
 
 func (p *Plugin) templateChart(release *types.Release) (string, error) {
-	chartDir := filepath.Base(release.ChartPath)
+
 	cb := commandbuilder.CommandBuilder{Name: constants.HelmBin}
 	cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: "template"})
-	if release.Namespace != "" {
-		cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeLongParam, Name: "namespace", Value: release.Namespace})
-	}
-	if release.Name != "" {
-		cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeLongParam, Name: "name", Value: release.Name})
-	}
+	cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: release.Name})
+	cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: release.ChartPath})
+	cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeLongParam, Name: "version", Value: release.Version})
+	// Add Overrides
 	for _, override := range p.overrides(release) {
 		cb.Add(override)
 	}
-	cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: chartDir})
 	cmd := cb.Command()
 	templateBytes, err := cmd.Output()
 	if err != nil {
@@ -341,7 +337,7 @@ func (p *Plugin) setupKubeconfig() error {
 	if p.KubeConfig != "" {
 		log.Println("Creating Kubernetes config")
 		if err := ioutil.WriteFile(kubeConfig, []byte(p.KubeConfig), 0600); err != nil {
-			return fmt.Errorf("Error creating kube config file: %v", err)
+			return fmt.Errorf("error creating kube config file: %v", err)
 		}
 	}
 
@@ -351,7 +347,7 @@ func (p *Plugin) setupKubeconfig() error {
 		log.Println("Setting Kubernetes context")
 		cmd := exec.Command(kubectlBin, "config", "use-context", p.KubeContext)
 		if err := utils.Run(cmd, true); err != nil {
-			return fmt.Errorf("Error setting Kubernetes context: %v", err)
+			return fmt.Errorf("error setting Kubernetes context: %v", err)
 		}
 	}
 	return nil
