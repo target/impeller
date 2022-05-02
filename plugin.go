@@ -237,10 +237,15 @@ func (p *Plugin) installAddonViaKubectl(release *types.Release) error {
 		cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeLongParam, Name: "namespace", Value: release.Namespace})
 	}
 	cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeLongParam, Name: "context", Value: p.KubeContext})
-
-	cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: "apply"})
+	// Diff Run
+	if p.Diffrun {
+		log.Println("Running Diff run:", release.Name)
+		cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: "diff"})
+	} else {
+		cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: "apply"})
+	}
 	// Dry Run
-	if p.Dryrun || p.Diffrun {
+	if p.Dryrun {
 		log.Println("Running Dry run:", release.Name)
 		cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: "--dry-run=server"})
 	}
@@ -255,7 +260,7 @@ func (p *Plugin) installAddonViaKubectl(release *types.Release) error {
 	// independent components and the second run will install the ones
 	// that failed previously. If this command fails twice then the chart
 	// is just broken
-	if err := utils.Run(kubectlApplyCmd, false); err != nil {
+	if err := utils.Run(kubectlApplyCmd, false); err != nil && !(p.Diffrun && release.DeploymentMethod == "kubectl") {
 		kubectlApplyCmd := cb.Command()
 		kubectlApplyCmd.Stdin = strings.NewReader(renderedManifests)
 		return utils.Run(kubectlApplyCmd, false)
