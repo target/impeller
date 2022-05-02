@@ -240,7 +240,7 @@ func (p *Plugin) installAddonViaKubectl(release *types.Release) error {
 
 	cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: "apply"})
 	// Dry Run
-	if p.Dryrun {
+	if p.Dryrun || p.Diffrun {
 		log.Println("Running Dry run:", release.Name)
 		cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: "--dry-run=server"})
 	}
