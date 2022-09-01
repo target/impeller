@@ -34,7 +34,7 @@ impeller --cluster-config-path=./clusters/my-cluster.yaml --kube-config="$(cat ~
 or using `base64` encoded `kubeconfig`:
 
 ```bash
-impeller --cluster-config-path=./clusters/my-cluster.yaml --kube-config="$(base64 ~/.kube/config)" --kube-context my-kubernetes-context
+impeller --cluster-config-path=./clusters/my-cluster.yaml --kube-config="$(base64 ~/.kube/config)" --kube-context my-kubernetes-context --kube-config-base64=true
 ```
 2. Dry run command:
 ```bash
