@@ -32,6 +32,11 @@ func main() {
 			Usage:  "Kubernetes configuration file",
 			EnvVar: "KUBE_CONFIG,PLUGIN_KUBE_CONFIG,PARAMETER_KUBE_CONFIG",
 		},
+		cli.BoolFlag{
+			Name:   "kube-config-base64",
+			Usage:  "Flag true/false, base64 encoded kubeconfig",
+			EnvVar: "KUBE_CONFIG_BASE64,PLUGIN_KUBE_CONFIG_BASE64,PARAMETER_KUBE_CONFIG_BASE64",
+		},
 		cli.StringFlag{
 			Name:   "kube-context",
 			Usage:  "Kubernetes configuration context to use",
@@ -105,6 +110,7 @@ func run(ctx *cli.Context) error {
 		ClustersList:      clist,
 		ValueFiles:        ctx.StringSlice("value-files"),
 		KubeConfig:        ctx.String("kube-config"),
+		KubeConfigBase64:  ctx.Bool("kube-config-base64"),
 		KubeContext:       ctx.String("kube-context"),
 		Dryrun:            ctx.Bool("dry-run"),
 		Diffrun:           ctx.Bool("diff-run"),

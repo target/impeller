@@ -26,11 +26,22 @@ Manages Helm charts running in Kubernetes clusters.
 ## How to use
 ### Command line
 1. Deployment command:
-`impeller --cluster-config-path=./clusters/my-cluster.yaml --kube-config="$(cat ~/.kube/config)" --kube-context my-kubernetes-context`
-2. Dry run command:
-`impeller --cluster-config-path=./clusters/my-cluster.yaml --kube-config="$(cat ~/.kube/config)" --kube-context my-kubernetes-context --dry-run`
-By default override values are hidden with `--dry-run` option. You can add `showValue: true` to your release to enable printout:
+
+```bash
+impeller --cluster-config-path=./clusters/my-cluster.yaml --kube-config="$(cat ~/.kube/config)" --kube-context my-kubernetes-context
 ```
+
+or using `base64` encoded `kubeconfig`:
+
+```bash
+impeller --cluster-config-path=./clusters/my-cluster.yaml --kube-config="$(base64 ~/.kube/config)" --kube-context my-kubernetes-context
+```
+2. Dry run command:
+```bash
+ impeller --cluster-config-path=./clusters/my-cluster.yaml --kube-config="$(cat ~/.kube/config)" --kube-context my-kubernetes-context --dry-run
+ ```
+By default override values are hidden with `--dry-run` option. You can add `showValue: true` to your release to enable printout:
+```bash
 releases:
   - name: test-release
     namespace: kube-system
@@ -41,11 +52,17 @@ releases:
         value: 1.6.0
 ```
 3. Diff run command:
-`impeller --cluster-config-path=./clusters/my-cluster.yaml --kube-config="$(cat ~/.kube/config)" --kube-context my-kubernetes-context --diff-run`
+```bash
+impeller --cluster-config-path=./clusters/my-cluster.yaml --kube-config="$(cat ~/.kube/config)" --kube-context my-kubernetes-context --diff-run
+```
 4. Generate Audit report file:
-`impeller --cluster-config-path=./clusters  --audit=true`
+```bash
+impeller --cluster-config-path=./clusters  --audit=true
+```
 or
-`impeller --cluster-config-path=./clusters  --audit=true --audit-file=./myreport.csv`
+```bash
+impeller --cluster-config-path=./clusters  --audit=true --audit-file=./myreport.csv
+```
 
 ### Drone pipeline
 #### Simple example

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/base64"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -30,6 +31,8 @@ type Plugin struct {
 	ClustersList      report.Clusters
 	ValueFiles        []string
 	KubeConfig        string
+	KubeConfigFile    string
+	KubeConfigBase64  bool
 	KubeContext       string
 	Dryrun            bool
 	Diffrun           bool
@@ -336,13 +339,31 @@ func (p *Plugin) templateChart(release *types.Release) (string, error) {
 }
 
 func (p *Plugin) setupKubeconfig() error {
-	// Providing a Kubernetes config is mostly used for Drone support.
-	// If not provided, the default `kubectl` search path is used.
-	// WARNING: this may overwrite your config if it already exists.
+	var err error
+	byteData := []byte{}
+
 	if p.KubeConfig != "" {
-		log.Println("Creating Kubernetes config")
-		if err := ioutil.WriteFile(kubeConfig, []byte(p.KubeConfig), 0600); err != nil {
+		p.KubeConfigFile = kubeConfig + "-" + p.KubeContext
+		log.Println("Creating Kubernetes configfile" + p.KubeConfigFile)
+		if p.KubeConfigBase64 {
+			log.Println("configfile is base64 encoded")
+			byteData, err = base64.StdEncoding.DecodeString(p.KubeConfig)
+			if err != nil {
+				log.Fatalf("err %v", err)
+			}
+
+		} else {
+			log.Println("configfile is not encoded")
+			byteData = []byte(p.KubeConfig)
+		}
+
+		if err := ioutil.WriteFile(p.KubeConfigFile, byteData, 0600); err != nil {
 			return fmt.Errorf("error creating kube config file: %v", err)
+		}
+		log.Println("setting KUBECONFIG environment variable to:  " + p.KubeConfigFile)
+		err := os.Setenv("KUBECONFIG", p.KubeConfigFile)
+		if err != nil {
+			log.Fatalf("err %v", err)
 		}
 	}
 
@@ -350,8 +371,13 @@ func (p *Plugin) setupKubeconfig() error {
 	// If not provided, the current context from Kubernetes config is used.
 	if p.KubeContext != "" {
 		log.Println("Setting Kubernetes context")
-		cmd := exec.Command(kubectlBin, "config", "use-context", p.KubeContext)
-		if err := utils.Run(cmd, true); err != nil {
+		cb := commandbuilder.CommandBuilder{Name: kubectlBin}
+		cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: "config"})
+		cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: "use-context"})
+		cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: p.KubeContext})
+		cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeLongParam, Name: "kubeconfig", Value: p.KubeConfigFile})
+		cmd := cb.Command()
+		if err := utils.Run(cmd, false); err != nil {
 			return fmt.Errorf("error setting Kubernetes context: %v", err)
 		}
 	}
