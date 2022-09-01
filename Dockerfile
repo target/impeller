@@ -1,6 +1,6 @@
 FROM golang:1.15-alpine as builder
-ENV DESIRED_VERSION=v3.8.0
-ENV HELM_DIFF_VERSION=v3.4.0
+ENV DESIRED_VERSION=v3.9.0
+ENV HELM_DIFF_VERSION=v3.5.0
 WORKDIR /go/src/github.com/target/impeller
 COPY . .
 ENV GO111MODULE=on
@@ -21,7 +21,7 @@ RUN cd /tmp && \
 RUN /usr/local/bin/helm plugin install https://github.com/databus23/helm-diff --version ${HELM_DIFF_VERSION}
 
 FROM alpine:latest
-ENV KUBECTL_VERSION=v1.23.4
+ENV KUBECTL_VERSION=v1.23.9
 RUN apk add ca-certificates
 RUN wget -O /usr/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl && \
     chmod +x /usr/bin/kubectl
