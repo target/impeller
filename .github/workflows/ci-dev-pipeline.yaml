@@ -10,6 +10,7 @@ on:
 
 env:
   TEST_TAG: target/impeller:beta
+  TEST_GCLOUD_TAG: target/impeller:beta-gcloud
 
 jobs:
   docker:
@@ -31,19 +32,55 @@ jobs:
         uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
         with:
           images: target/impeller
+          flavor: |
+            latest=false
+            prefix=beta
+            suffix=
 
       - name: Build and export to Docker
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
         with:
           context: .
+          file: ./Dockerfile
           load: true
           tags: ${{ env.TEST_TAG }}
+
 
       - name: Build and push Docker image
         if: github.event_name != 'pull_request'
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
         with:
           context: .
+          file: ./Dockerfile
           push: true
           tags: ${{ env.TEST_TAG }}
           labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Extract metadata (tags, labels) for Docker with gcloud
+        id: meta-g
+        uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
+        with:
+          images: target/impeller
+          flavor: |
+            latest=false
+            prefix=beta
+            suffix=gcloud
+
+      - name: Build and export to Docker with gcloud
+        uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
+        with:
+          context: .
+          file: ./Dockerfile-gcloud
+          load: true
+          tags: ${{ env.TEST_GCLOUD_TAG }}
+
+
+      - name: Build and push Docker image with gcloud
+        if: github.event_name != 'pull_request'
+        uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
+        with:
+          context: .
+          file: ./Dockerfile-gcloud
+          push: true
+          tags: ${{ steps.meta-g.outputs.tags }}
+          labels: ${{ steps.meta-g.outputs.labels }}
