@@ -76,5 +76,5 @@ jobs:
           context: .
           file: ./Dockerfile-gcloud
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: ${{ steps.meta-g.outputs.tags }}
           labels: ${{ steps.meta-g.outputs.labels }}
