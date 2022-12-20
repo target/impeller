@@ -10,10 +10,22 @@ on:
 
 env:
   TEST_TAG: target/impeller:beta
+  TEST_GCLOUD_TAG: target/impeller:beta-gcloud
 
 jobs:
   docker:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - dockerfile: ./Dockerfile
+            tag:  target/impeller:beta
+          - dockerfile: ./Dockerfile-gcloud
+            tag: target/impeller:beta-gcloud
+    permissions:
+      contents: read
+      packages: write
     steps:
       -
         name: Checkout
@@ -36,14 +48,17 @@ jobs:
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
         with:
           context: .
+          file: ${{ matrix.dockerfile }}
           load: true
-          tags: ${{ env.TEST_TAG }}
+          file: ${{ matrix.dockerfile }}
+          tags: ${{ matrix.tag }}
 
       - name: Build and push Docker image
         if: github.event_name != 'pull_request'
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
         with:
           context: .
+          file: ${{ matrix.dockerfile }}
           push: true
-          tags: ${{ env.TEST_TAG }}
+          tags: ${{ matrix.tag }}
           labels: ${{ steps.meta.outputs.labels }}

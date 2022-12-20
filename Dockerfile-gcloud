@@ -20,7 +20,10 @@ RUN cd /tmp && \
     && ./get_helm.sh
 RUN /usr/local/bin/helm plugin install https://github.com/databus23/helm-diff --version ${HELM_DIFF_VERSION}
 
-FROM alpine:latest
+#FROM alpine:latest
+FROM gcr.io/google.com/cloudsdktool/google-cloud-cli:alpine
+RUN gcloud components install gke-gcloud-auth-plugin
+
 ENV KUBECTL_VERSION=v1.24.7
 RUN apk add ca-certificates
 RUN wget -O /usr/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl && \
