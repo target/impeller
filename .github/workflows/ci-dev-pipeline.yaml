@@ -51,3 +51,28 @@ jobs:
           push: true
           tags: ${{ env.TEST_TAG }}
           labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
+        with:
+          images: target/impeller
+
+      - name: Build and export to Docker with gcloud
+        uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
+        with:
+          context: .
+          file: ./Dockerfile-gcloud
+          load: true
+          tags: ${{ env.TEST_GCLOUD_TAG }}
+
+
+      - name: Build and push Docker image with gcloud
+        if: github.event_name != 'pull_request'
+        uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
+        with:
+          context: .
+          file: ./Dockerfile-gcloud
+          push: true
+          tags: ${{ env.TEST_GCLOUD_TAG }}
+          labels: ${{ steps.meta.outputs.labels }}
