@@ -1,5 +1,5 @@
 FROM golang:1.19-alpine as builder
-ENV DESIRED_VERSION=v3.10.2
+ENV DESIRED_VERSION=v3.11.1
 ENV HELM_DIFF_VERSION=v3.5.0
 WORKDIR /go/src/github.com/target/impeller
 COPY . .
@@ -24,7 +24,7 @@ RUN /usr/local/bin/helm plugin install https://github.com/databus23/helm-diff --
 FROM gcr.io/google.com/cloudsdktool/google-cloud-cli:alpine
 RUN gcloud components install gke-gcloud-auth-plugin
 
-ENV KUBECTL_VERSION=v1.24.7
+ENV KUBECTL_VERSION=v1.24.12
 RUN apk add ca-certificates
 RUN wget -O /usr/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl && \
     chmod +x /usr/bin/kubectl
