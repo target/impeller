@@ -1,6 +1,6 @@
-FROM golang:1.19-alpine as builder
-ENV DESIRED_VERSION=v3.11.1
-ENV HELM_DIFF_VERSION=v3.5.0
+FROM golang:1.21-alpine as builder
+ENV DESIRED_VERSION=v3.13.0
+ENV HELM_DIFF_VERSION=v3.8.1
 WORKDIR /go/src/github.com/target/impeller
 COPY . .
 ENV GO111MODULE=on
@@ -25,7 +25,7 @@ RUN gcloud components install gke-gcloud-auth-plugin
 
 
 FROM alpine:latest
-ENV KUBECTL_VERSION=v1.24.12
+ENV KUBECTL_VERSION=v1.27.6
 RUN apk add ca-certificates
 RUN wget -O /usr/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl && \
     chmod +x /usr/bin/kubectl
