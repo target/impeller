@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"time"
 
 	"github.com/target/impeller/constants"
 	"github.com/target/impeller/types"
@@ -19,6 +20,14 @@ import (
 
 const (
 	kubectlBin = "kubectl"
+
+	maxRetriesDeployment   = 30
+	maxRetriesDaemonSet    = 30
+	maxRetriesStatefulSet  = 120
+	retryDelayDeployment   = 10 * time.Second
+	retryDelayDaemonSet    = 10 * time.Second
+	retryDelayStatefulSet  = 10 * time.Second
+	statefulSetLogInterval = 3
 )
 
 var (
@@ -331,69 +340,106 @@ func (p *Plugin) waitForResources(release *types.Release) error {
 	return nil
 }
 
-// waitForResource uses kubectl wait to check if a resource is ready (read-only operation)
-// Note: DaemonSets use rollout status instead of wait, as they don't support condition=ready
+// waitForResource checks if a resource is ready using polling (read-only operation)
 func (p *Plugin) waitForResource(resourceType, resourceName, namespace string) error {
-	// DaemonSets need special handling - use rollout status
-	if resourceType == "daemonset" {
-		return p.waitForDaemonSet(resourceName, namespace)
-	}
-	
-	cb := commandbuilder.CommandBuilder{Name: constants.KubectlBin}
-	cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: "wait"})
-	
-	// Set the appropriate condition based on resource type
-	var condition string
 	switch resourceType {
 	case "deployment":
-		condition = "condition=available"
+		return p.waitForDeployment(resourceName, namespace)
+	case "daemonset":
+		return p.waitForDaemonSet(resourceName, namespace)
 	case "statefulset":
-		condition = "condition=ready"
+		return p.waitForStatefulSet(resourceName, namespace)
 	default:
-		condition = "condition=ready"
+		return fmt.Errorf("unsupported resource type: %s", resourceType)
 	}
-	
-	cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeLongParam, Name: "for", Value: condition})
-	cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: fmt.Sprintf("%s/%s", resourceType, resourceName)})
-	
-	if namespace != "" {
-		cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeLongParam, Name: "namespace", Value: namespace})
-	}
-	
-	if p.KubeContext != "" {
-		cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeLongParam, Name: "context", Value: p.KubeContext})
-	}
-
-	// No timeout - wait until resources are ready
-	if err := cb.Run(); err != nil {
-		return fmt.Errorf("wait for ready state failed: %v", err)
-	}
-	
-	log.Printf("Successfully verified %s/%s is ready", resourceType, resourceName)
-	return nil
 }
 
-// waitForDaemonSet uses kubectl rollout status for DaemonSets (read-only, doesn't trigger rollouts)
+func (p *Plugin) waitForDeployment(resourceName, namespace string) error {
+	log.Printf("⏳ Waiting for deployment %s/%s to be ready...", namespace, resourceName)
+
+	for i := 0; i < maxRetriesDeployment; i++ {
+		output, err := p.kubectlGetJSONPath("deployment", resourceName, namespace, "{.status.conditions[?(@.type=='Available')].status}")
+		if err == nil && strings.TrimSpace(output) == "True" {
+			log.Printf("✅ Deployment %s/%s is ready", namespace, resourceName)
+			return nil
+		}
+
+		if i < maxRetriesDeployment-1 {
+			time.Sleep(retryDelayDeployment)
+		}
+	}
+
+	return fmt.Errorf("timeout waiting for deployment %s/%s", namespace, resourceName)
+}
+
 func (p *Plugin) waitForDaemonSet(resourceName, namespace string) error {
+	log.Printf("⏳ Waiting for daemonset %s/%s to be ready...", namespace, resourceName)
+
+	for i := 0; i < maxRetriesDaemonSet; i++ {
+		output, err := p.kubectlGetJSONPath("daemonset", resourceName, namespace, "{.status.numberReady},{.status.desiredNumberScheduled}")
+		if err == nil {
+			parts := strings.Split(strings.TrimSpace(output), ",")
+			if len(parts) == 2 && parts[0] == parts[1] && parts[0] != "0" {
+				log.Printf("✅ DaemonSet %s/%s is ready", namespace, resourceName)
+				return nil
+			}
+		}
+
+		if i < maxRetriesDaemonSet-1 {
+			time.Sleep(retryDelayDaemonSet)
+		}
+	}
+
+	return fmt.Errorf("timeout waiting for daemonset %s/%s", namespace, resourceName)
+}
+
+func (p *Plugin) waitForStatefulSet(resourceName, namespace string) error {
+	log.Printf("⏳ Waiting for statefulset %s/%s to be ready...", namespace, resourceName)
+	log.Printf("  (This may take up to %d minutes for larger clusters)", maxRetriesStatefulSet*int(retryDelayStatefulSet.Seconds())/60)
+
+	for i := 0; i < maxRetriesStatefulSet; i++ {
+		output, err := p.kubectlGetJSONPath("statefulset", resourceName, namespace, "{.status.readyReplicas},{.status.replicas}")
+		if err == nil {
+			parts := strings.Split(strings.TrimSpace(output), ",")
+			if len(parts) == 2 && parts[0] == parts[1] && parts[0] != "0" {
+				log.Printf("✅ StatefulSet %s/%s is ready (%s/%s replicas)", namespace, resourceName, parts[0], parts[1])
+				return nil
+			}
+			if len(parts) == 2 && i%statefulSetLogInterval == 0 {
+				log.Printf("  Progress: %s/%s replicas ready (attempt %d/%d)", parts[0], parts[1], i+1, maxRetriesStatefulSet)
+			}
+		}
+
+		if i < maxRetriesStatefulSet-1 {
+			time.Sleep(retryDelayStatefulSet)
+		}
+	}
+
+	return fmt.Errorf("timeout waiting for statefulset %s/%s after %d minutes", namespace, resourceName, maxRetriesStatefulSet*int(retryDelayStatefulSet.Seconds())/60)
+}
+
+func (p *Plugin) kubectlGetJSONPath(resourceType, resourceName, namespace, jsonPath string) (string, error) {
 	cb := commandbuilder.CommandBuilder{Name: constants.KubectlBin}
-	cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: "rollout"})
-	cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: "status"})
-	cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: fmt.Sprintf("daemonset/%s", resourceName)})
-	
+	cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: "get"})
+	cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: resourceType})
+	cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: resourceName})
+
 	if namespace != "" {
 		cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeLongParam, Name: "namespace", Value: namespace})
 	}
-	
+
 	if p.KubeContext != "" {
 		cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeLongParam, Name: "context", Value: p.KubeContext})
 	}
 
-	if err := cb.Run(); err != nil {
-		return fmt.Errorf("rollout status check failed: %v", err)
+	cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeLongParam, Name: "output", Value: fmt.Sprintf("jsonpath=%s", jsonPath)})
+
+	output, err := cb.Command().Output()
+	if err != nil {
+		return "", err
 	}
-	
-	log.Printf("Successfully verified daemonset/%s is ready", resourceName)
-	return nil
+
+	return string(output), nil
 }
 
 // applyKubectlFiles applies additional kubectl manifest files after deployment
