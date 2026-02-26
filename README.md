@@ -18,6 +18,36 @@ Manages Helm charts running in Kubernetes clusters.
 * Share chart overrides across clusters with a `default.yaml` file.
 * Make cluster-specific chart overrides when necessary.
 
+### Managing Dependencies on Addons sequence (Optional feature)
+
+* Next consecutive installation fails due previous pods take time to come up
+* Implemented Wait for Resource feature before moving to the next pipeline
+    - WaitforDeployment
+    - WaitforDaemonset
+    - WaitforStatefulset
+* May need to collect desired resource getting installed using `helm template` when dependency as needed for continuous execution of pipeline.
+* `Kubectlfiles` options enabled in case some external configuration needed for components outside of helm install
+
+```yaml
+name: cluster1-lab
+releases:
+#
+  - name: sample-server
+    namespace: kube-system
+    version: 3.9.0
+    chartPath: stable/sample-server
+    waitforDeployment: 
+      - sample-server
+      - sample-server-2
+    waitforDaemonset: 
+      - sample-server-ds
+    waitforStatefulset:
+      - sample-db-server
+    kubectlFiles:
+      - sample-server.yaml
+      - sample-server-lab
+```
+
 ### Other features
 * Use it as a [Drone](https://drone.io/) plugin for CI/CD.
 * Read secrets from environment variables.
