@@ -1,6 +1,8 @@
 package main
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -86,4 +88,66 @@ func TestPlugin_ExecReport(t *testing.T) {
 	err = p.Exec()
 	require.Nil(t, err)
 
+}
+
+func TestGetYAMLFilesFromDir(t *testing.T) {
+	tempDir := t.TempDir()
+
+	require.NoError(t, os.WriteFile(filepath.Join(tempDir, "a.yaml"), []byte("kind: ConfigMap"), 0o644))
+	require.NoError(t, os.WriteFile(filepath.Join(tempDir, "b.yml"), []byte("kind: Service"), 0o644))
+	require.NoError(t, os.WriteFile(filepath.Join(tempDir, "notes.txt"), []byte("ignore"), 0o644))
+	require.NoError(t, os.WriteFile(filepath.Join(tempDir, "kustomization.yaml"), []byte("resources: []"), 0o644))
+
+	child := filepath.Join(tempDir, "subdir")
+	require.NoError(t, os.Mkdir(child, 0o755))
+	require.NoError(t, os.WriteFile(filepath.Join(child, "child.yaml"), []byte("kind: Secret"), 0o644))
+
+	p := &Plugin{}
+	files, err := p.getYAMLFilesFromDir(tempDir)
+	require.NoError(t, err)
+
+	assert.ElementsMatch(t, []string{
+		filepath.Join(tempDir, "a.yaml"),
+		filepath.Join(tempDir, "b.yml"),
+	}, files)
+}
+
+func TestApplyKubectlFilesSkipsOnDryrun(t *testing.T) {
+	p := &Plugin{Dryrun: true}
+	release := &types.Release{KubectlFiles: []string{"does-not-need-to-exist.yaml"}}
+
+	err := p.applyKubectlFiles(release)
+	require.NoError(t, err)
+}
+
+func TestApplyKubectlFilesSkipsOnDiffrun(t *testing.T) {
+	p := &Plugin{Diffrun: true}
+	release := &types.Release{KubectlFiles: []string{"does-not-need-to-exist.yaml"}}
+
+	err := p.applyKubectlFiles(release)
+	require.NoError(t, err)
+}
+
+func TestWaitForResourcesSkipsOnDryrun(t *testing.T) {
+	p := &Plugin{Dryrun: true}
+	release := &types.Release{
+		WaitforDeployment:  []string{"sample-deploy"},
+		WaitforDaemonSet:   []string{"sample-daemon"},
+		WaitforStatefulSet: []string{"sample-stateful"},
+	}
+
+	err := p.waitForResources(release)
+	require.NoError(t, err)
+}
+
+func TestWaitForResourcesSkipsOnDiffrun(t *testing.T) {
+	p := &Plugin{Diffrun: true}
+	release := &types.Release{
+		WaitforDeployment:  []string{"sample-deploy"},
+		WaitforDaemonSet:   []string{"sample-daemon"},
+		WaitforStatefulSet: []string{"sample-stateful"},
+	}
+
+	err := p.waitForResources(release)
+	require.NoError(t, err)
 }

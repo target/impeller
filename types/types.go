@@ -23,15 +23,20 @@ type HelmRepo struct {
 }
 
 type Release struct {
-	Name             string     `yaml:"name"`
-	DeploymentMethod string     `yaml:"deploymentMethod,omitempty"`
-	Version          string     `yaml:"version"`
-	ChartPath        string     `yaml:"chartPath"`
-	ChartsSource     string     `yaml:"chartsSource"`
-	History          uint       `yaml:history`
-	Overrides        []Override `yaml:"overrides,omitempty"`
-	Namespace        string     `yaml:"namespace,omitempty"`
-	ValueFiles       []string   `yaml:"valueFiles,omitempty"`
+	Name                string     `yaml:"name"`
+	DeploymentMethod    string     `yaml:"deploymentMethod,omitempty"`
+	Version             string     `yaml:"version"`
+	ChartPath           string     `yaml:"chartPath"`
+	ChartsSource        string     `yaml:"chartsSource"`
+	History             uint       `yaml:history`
+	Overrides           []Override `yaml:"overrides,omitempty"`
+	Namespace           string     `yaml:"namespace,omitempty"`
+	ValueFiles          []string   `yaml:"valueFiles,omitempty"`
+	WaitforDeployment   []string   `yaml:"waitforDeployment,omitempty"`
+	WaitforDaemonSet    []string   `yaml:"waitforDaemonSet,omitempty"`
+	WaitforStatefulSet  []string   `yaml:"waitforStatefulSet,omitempty"`
+	KubectlFiles        []string   `yaml:"kubectlFiles,omitempty"`
+	Force               bool       `yaml:"force,omitempty"`
 }
 
 type Override struct {
@@ -83,8 +88,8 @@ func (v Value) BuildArg(name string) (*commandbuilder.Arg, error) {
 	}
 }
 
-/// GetValue returns the override value as a string. If a file or environment
-/// variable is set, the contents are read import ()and returned as a string.
+// GetValue returns the override value as a string. If a file or environment
+// variable is set, the contents are read and returned as a string.
 func (v Value) GetValue() (string, error) {
 	if v.Value != nil {
 		return *v.Value, nil
