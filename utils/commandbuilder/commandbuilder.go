@@ -8,6 +8,8 @@ import (
 	"strings"
 )
 
+var shellUnsafeChars = " \t\n\r\"'`$&|;<>()[{}]*?!#~="
+
 const (
 	ArgTypeRaw        = 1
 	ArgTypeShortParam = 2
@@ -72,7 +74,19 @@ func (a Arg) SafeValue() string {
 	if a.ValueSecret {
 		return "[SECRET]"
 	}
-	return a.Value
+	return ShellQuote(a.Value)
+}
+
+func ShellQuote(value string) string {
+	if value == "" {
+		return "''"
+	}
+
+	if !strings.ContainsAny(value, shellUnsafeChars) {
+		return value
+	}
+
+	return "'" + strings.ReplaceAll(value, "'", "'\"'\"'") + "'"
 }
 
 func (a Arg) UnsafeParts() []string {

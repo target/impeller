@@ -6,3 +6,5 @@ releases:
         value: "unittest-value-1"
       - target: "override-target-2"
         value: "unittest-value-2"
+      - target: "servers[0].zones[0].zone"
+        value: "12.12.12.0/24 12.0.0.0/4 cluster.local"
