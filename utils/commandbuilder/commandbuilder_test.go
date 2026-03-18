@@ -17,6 +17,17 @@ func TestCommandBuilderSafeString(t *testing.T) {
 	cb = CommandBuilder{Name: "testbin"}
 	cb.Add(Arg{Type: 99999, Value: "rawparam", ValueSecret: true})
 	assert.Equal(t, "testbin [SECRET]", cb.SafeString())
+
+	cb = CommandBuilder{Name: "helm"}
+	cb.Add(Arg{Type: ArgTypeLongParam, Name: "set", Value: "servers[0].zones[0].zone=12.12.12.0/24 12.0.0.0/4 cluster.local"})
+	assert.Equal(t, "helm --set 'servers[0].zones[0].zone=12.12.12.0/24 12.0.0.0/4 cluster.local'", cb.SafeString())
+}
+
+func TestShellQuote(t *testing.T) {
+	assert.Equal(t, "simple", ShellQuote("simple"))
+	assert.Equal(t, "'needs spaces'", ShellQuote("needs spaces"))
+	assert.Equal(t, "'contains='", ShellQuote("contains="))
+	assert.Equal(t, "'it'\"'\"'s quoted'", ShellQuote("it's quoted"))
 }
 
 func TestCommandBuilderCommand(t *testing.T) {

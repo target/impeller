@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/target/impeller/types"
+	"github.com/target/impeller/utils/commandbuilder"
 	"github.com/target/impeller/utils/report"
 
 	"gopkg.in/yaml.v2"
@@ -19,7 +20,11 @@ import (
 // but this can be disabled if the command contains secrets.
 func Run(cmd *exec.Cmd, showCommand bool) error {
 	if showCommand {
-		log.Printf("RUNNING: %s", strings.Join(cmd.Args, " "))
+		quotedArgs := make([]string, len(cmd.Args))
+		for i, arg := range cmd.Args {
+			quotedArgs[i] = commandbuilder.ShellQuote(arg)
+		}
+		log.Printf("RUNNING: %s", strings.Join(quotedArgs, " "))
 	} else {
 		log.Printf("RUNNING COMMAND: (command hidden)")
 	}

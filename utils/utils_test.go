@@ -34,4 +34,8 @@ func TestReadConfigWithChartOverrides(t *testing.T) {
 	overrideValue, err = overrides[1].GetValue()
 	require.Nil(t, err)
 	assert.Equal(t, "unittest-value-2", overrideValue)
+
+	overrideValue, err = overrides[2].GetValue()
+	require.Nil(t, err)
+	assert.Equal(t, "12.12.12.0/24 12.0.0.0/4 cluster.local", overrideValue)
 }
