@@ -202,6 +202,22 @@ func TestApplySecretsRequiresEnvironmentVariables(t *testing.T) {
 	assert.Contains(t, err.Error(), "requires environment variable")
 }
 
+func TestApplySecretsRejectsPlainTextSecretValue(t *testing.T) {
+	p := &Plugin{}
+	release := &types.Release{
+		Name: "test-release",
+		Secrets: []types.Secret{{
+			Name: "my-secret",
+			Data: map[string]string{"password": "my-plain-text-password"},
+		}},
+	}
+
+	err := p.applySecrets(release)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "requires environment variable")
+	assert.Contains(t, err.Error(), "my-plain-text-password")
+}
+
 func TestIsBase64Encoded(t *testing.T) {
 	assert.True(t, isBase64Encoded("aGVsbG8="))
 	assert.True(t, isBase64Encoded("aGVsbG8"))
