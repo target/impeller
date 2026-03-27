@@ -16,6 +16,7 @@ import (
 	"github.com/target/impeller/utils"
 	"github.com/target/impeller/utils/commandbuilder"
 	"github.com/target/impeller/utils/report"
+	"gopkg.in/yaml.v2"
 )
 
 const (
@@ -172,21 +173,31 @@ func (p *Plugin) installAddon(release *types.Release) error {
 	default:
 		err = p.installAddonViaHelm(release)
 	}
-	
+
 	if err != nil {
 		return err
 	}
-	
+
 	// Wait for resources to be ready
 	if err := p.waitForResources(release); err != nil {
 		return err
 	}
-	
+
 	// Apply additional kubectl files after resources are ready
 	if err := p.applyKubectlFiles(release); err != nil {
 		return err
 	}
-	
+
+	// Create/update configured secrets after core resources are ready.
+	if err := p.applySecrets(release); err != nil {
+		return err
+	}
+
+	// Run optional post-deploy shell commands.
+	if err := p.runShellCommands(release); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -481,14 +492,14 @@ func (p *Plugin) applyKubectlFiles(release *types.Release) error {
 		// Apply each file
 		for _, file := range filesToApply {
 			log.Printf("Applying kubectl file: %s", file)
-			
+
 			cb := commandbuilder.CommandBuilder{Name: constants.KubectlBin}
 			cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: "apply"})
 			cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeLongParam, Name: "filename", Value: file})
-			
+
 			// Don't force namespace - let the manifest define its own namespace
 			// This allows resources to be created in their specified namespaces
-			
+
 			if p.KubeContext != "" {
 				cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeLongParam, Name: "context", Value: p.KubeContext})
 			}
@@ -496,7 +507,7 @@ func (p *Plugin) applyKubectlFiles(release *types.Release) error {
 			if err := cb.Run(); err != nil {
 				return fmt.Errorf("error applying kubectl file \"%s\": %v", file, err)
 			}
-			
+
 			log.Printf("Successfully applied kubectl file: %s", file)
 		}
 	}
@@ -508,7 +519,7 @@ func (p *Plugin) applyKubectlFiles(release *types.Release) error {
 // Excludes kustomization.yaml and Kustomization.yaml files
 func (p *Plugin) getYAMLFilesFromDir(dirPath string) ([]string, error) {
 	var yamlFiles []string
-	
+
 	files, err := ioutil.ReadDir(dirPath)
 	if err != nil {
 		return nil, err
@@ -518,16 +529,16 @@ func (p *Plugin) getYAMLFilesFromDir(dirPath string) ([]string, error) {
 		if file.IsDir() {
 			continue
 		}
-		
+
 		fileName := file.Name()
-		
+
 		// Skip kustomization files
-		if fileName == "kustomization.yaml" || fileName == "Kustomization.yaml" || 
-		   fileName == "kustomization.yml" || fileName == "Kustomization.yml" {
+		if fileName == "kustomization.yaml" || fileName == "Kustomization.yaml" ||
+			fileName == "kustomization.yml" || fileName == "Kustomization.yml" {
 			log.Printf("Skipping kustomization file: %s", fileName)
 			continue
 		}
-		
+
 		if strings.HasSuffix(fileName, ".yaml") || strings.HasSuffix(fileName, ".yml") {
 			fullPath := dirPath + "/" + fileName
 			yamlFiles = append(yamlFiles, fullPath)
@@ -541,6 +552,124 @@ func (p *Plugin) getYAMLFilesFromDir(dirPath string) ([]string, error) {
 	}
 
 	return yamlFiles, nil
+}
+
+func (p *Plugin) applySecrets(release *types.Release) error {
+	if p.Dryrun || p.Diffrun || len(release.Secrets) == 0 {
+		return nil
+	}
+
+	for _, secret := range release.Secrets {
+		if secret.Name == "" {
+			return fmt.Errorf("secret name cannot be empty for release %s", release.Name)
+		}
+		if len(secret.Data) == 0 {
+			return fmt.Errorf("secret %s has no data for release %s", secret.Name, release.Name)
+		}
+
+		namespace := secret.Namespace
+		if namespace == "" {
+			namespace = release.Namespace
+		}
+
+		secretData := map[string]string{}
+		secretStringData := map[string]string{}
+
+		for key, rawValue := range secret.Data {
+			value := rawValue
+			if envValue, isSet := os.LookupEnv(rawValue); isSet {
+				value = envValue
+			}
+
+			if isBase64Encoded(value) {
+				secretData[key] = strings.TrimSpace(value)
+			} else {
+				secretStringData[key] = value
+			}
+		}
+
+		metadata := map[string]string{"name": secret.Name}
+		if namespace != "" {
+			metadata["namespace"] = namespace
+		}
+
+		secretManifestMap := map[string]interface{}{
+			"apiVersion": "v1",
+			"kind":       "Secret",
+			"metadata":   metadata,
+			"type":       "Opaque",
+		}
+
+		if len(secretData) > 0 {
+			secretManifestMap["data"] = secretData
+		}
+		if len(secretStringData) > 0 {
+			secretManifestMap["stringData"] = secretStringData
+		}
+
+		secretManifest, err := yaml.Marshal(secretManifestMap)
+		if err != nil {
+			return fmt.Errorf("error preparing secret %q manifest: %v", secret.Name, err)
+		}
+
+		applyArgs := []string{"apply", "--filename", "-"}
+		if p.KubeContext != "" {
+			applyArgs = append(applyArgs, "--context", p.KubeContext)
+		}
+
+		applyCmd := exec.Command(constants.KubectlBin, applyArgs...)
+		applyCmd.Stdin = strings.NewReader(string(secretManifest))
+		applyCmd.Stdout = os.Stdout
+		applyCmd.Stderr = os.Stderr
+
+		if err := applyCmd.Run(); err != nil {
+			return fmt.Errorf("error applying secret %q: %v", secret.Name, err)
+		}
+
+		log.Printf("Applied secret: %s", secret.Name)
+	}
+
+	return nil
+}
+
+func isBase64Encoded(value string) bool {
+	trimmed := strings.TrimSpace(value)
+	if trimmed == "" {
+		return false
+	}
+
+	if decoded, err := base64.StdEncoding.DecodeString(trimmed); err == nil {
+		if base64.StdEncoding.EncodeToString(decoded) == trimmed {
+			return true
+		}
+	}
+
+	if decoded, err := base64.RawStdEncoding.DecodeString(trimmed); err == nil {
+		if base64.RawStdEncoding.EncodeToString(decoded) == trimmed {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (p *Plugin) runShellCommands(release *types.Release) error {
+	if p.Dryrun || p.Diffrun || len(release.Shell) == 0 {
+		return nil
+	}
+
+	for _, cmdStr := range release.Shell {
+		if strings.TrimSpace(cmdStr) == "" {
+			continue
+		}
+
+		cmd := exec.Command("sh", "-c", cmdStr)
+		if err := utils.Run(cmd, false); err != nil {
+			return fmt.Errorf("error running shell command %q: %v", cmdStr, err)
+		}
+	}
+
+	return nil
 }
 
 func (p *Plugin) fetchChart(release *types.Release) error {

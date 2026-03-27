@@ -11,6 +11,14 @@ releases:
     kubectlFiles:
       - sample-server.yaml
       - sample-server
+    shell:
+      - kubectl create secrets hello-world --from-literal=hello=world -n kube-system
+    secrets:
+      - name: hello-world
+        namespace: kube-system
+        data:
+          key1: MYSECRET
+          key2: MYSECRET2
   - name: sample-ingress
     namespace: kube-system
     version: 3.9.3

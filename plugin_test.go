@@ -151,3 +151,61 @@ func TestWaitForResourcesSkipsOnDiffrun(t *testing.T) {
 	err := p.waitForResources(release)
 	require.NoError(t, err)
 }
+
+func TestApplySecretsSkipsOnDryrun(t *testing.T) {
+	p := &Plugin{Dryrun: true}
+	release := &types.Release{
+		Secrets: []types.Secret{{
+			Name: "my-secret",
+			Data: map[string]string{"key": "value"},
+		}},
+	}
+
+	err := p.applySecrets(release)
+	require.NoError(t, err)
+}
+
+func TestApplySecretsSkipsOnDiffrun(t *testing.T) {
+	p := &Plugin{Diffrun: true}
+	release := &types.Release{
+		Secrets: []types.Secret{{
+			Name: "my-secret",
+			Data: map[string]string{"key": "value"},
+		}},
+	}
+
+	err := p.applySecrets(release)
+	require.NoError(t, err)
+}
+
+func TestRunShellCommandsSkipsOnDryrun(t *testing.T) {
+	p := &Plugin{Dryrun: true}
+	release := &types.Release{Shell: []string{"echo hello"}}
+
+	err := p.runShellCommands(release)
+	require.NoError(t, err)
+}
+
+func TestRunShellCommandsSkipsOnDiffrun(t *testing.T) {
+	p := &Plugin{Diffrun: true}
+	release := &types.Release{Shell: []string{"echo hello"}}
+
+	err := p.runShellCommands(release)
+	require.NoError(t, err)
+}
+
+func TestApplySecretsValidation(t *testing.T) {
+	p := &Plugin{}
+	release := &types.Release{Name: "test-release", Secrets: []types.Secret{{}}}
+
+	err := p.applySecrets(release)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "secret name cannot be empty")
+}
+
+func TestIsBase64Encoded(t *testing.T) {
+	assert.True(t, isBase64Encoded("aGVsbG8="))
+	assert.True(t, isBase64Encoded("aGVsbG8"))
+	assert.False(t, isBase64Encoded("hello"))
+	assert.False(t, isBase64Encoded(""))
+}

@@ -23,20 +23,28 @@ type HelmRepo struct {
 }
 
 type Release struct {
-	Name                string     `yaml:"name"`
-	DeploymentMethod    string     `yaml:"deploymentMethod,omitempty"`
-	Version             string     `yaml:"version"`
-	ChartPath           string     `yaml:"chartPath"`
-	ChartsSource        string     `yaml:"chartsSource"`
-	History             uint       `yaml:history`
-	Overrides           []Override `yaml:"overrides,omitempty"`
-	Namespace           string     `yaml:"namespace,omitempty"`
-	ValueFiles          []string   `yaml:"valueFiles,omitempty"`
-	WaitforDeployment   []string   `yaml:"waitforDeployment,omitempty"`
-	WaitforDaemonSet    []string   `yaml:"waitforDaemonSet,omitempty"`
-	WaitforStatefulSet  []string   `yaml:"waitforStatefulSet,omitempty"`
-	KubectlFiles        []string   `yaml:"kubectlFiles,omitempty"`
-	Force               bool       `yaml:"force,omitempty"`
+	Name               string     `yaml:"name"`
+	DeploymentMethod   string     `yaml:"deploymentMethod,omitempty"`
+	Version            string     `yaml:"version"`
+	ChartPath          string     `yaml:"chartPath"`
+	ChartsSource       string     `yaml:"chartsSource"`
+	History            uint       `yaml:history`
+	Overrides          []Override `yaml:"overrides,omitempty"`
+	Namespace          string     `yaml:"namespace,omitempty"`
+	ValueFiles         []string   `yaml:"valueFiles,omitempty"`
+	WaitforDeployment  []string   `yaml:"waitforDeployment,omitempty"`
+	WaitforDaemonSet   []string   `yaml:"waitforDaemonSet,omitempty"`
+	WaitforStatefulSet []string   `yaml:"waitforStatefulSet,omitempty"`
+	KubectlFiles       []string   `yaml:"kubectlFiles,omitempty"`
+	Shell              []string   `yaml:"shell,omitempty"`
+	Secrets            []Secret   `yaml:"secrets,omitempty"`
+	Force              bool       `yaml:"force,omitempty"`
+}
+
+type Secret struct {
+	Name      string            `yaml:"name"`
+	Namespace string            `yaml:"namespace,omitempty"`
+	Data      map[string]string `yaml:"data,omitempty"`
 }
 
 type Override struct {
@@ -44,10 +52,10 @@ type Override struct {
 	Target string `yaml:"target"`
 }
 
-/// BuildArg creates a commandbuilder.Arg for either a `--set` or
-/// `--set-file` argument. If the value is provided directly or as an
-/// environment variable, `--set` will be used. If a file is provided,
-/// then `--set-file` will be used.
+// BuildArg creates a commandbuilder.Arg for either a `--set` or
+// `--set-file` argument. If the value is provided directly or as an
+// environment variable, `--set` will be used. If a file is provided,
+// then `--set-file` will be used.
 func (o Override) BuildArg() (*commandbuilder.Arg, error) {
 	return o.Value.BuildArg(o.Target)
 }
