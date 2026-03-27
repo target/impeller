@@ -48,25 +48,6 @@ releases:
       - sample-server-lab
 ```
 
-### Post-deploy shell commands (Optional feature)
-
-Run arbitrary shell commands after a release is deployed. Useful for one-off `kubectl` tasks or any other post-deploy automation that isn't covered by Helm or kubectl manifests.
-
-* Commands are skipped automatically on `--dry-run` and `--diff-run`.
-* Each command is executed with `sh -c`, so shell features like pipes and env variable expansion work as expected.
-
-```yaml
-name: cluster1-lab
-releases:
-  - name: sample-server
-    namespace: kube-system
-    version: 3.9.0
-    chartPath: stable/sample-server
-    shell:
-      - kubectl annotate namespace kube-system example.com/managed-by=impeller --overwrite
-      - echo "Deployment of sample-server complete"
-```
-
 ### Kubernetes secret management (Optional feature)
 
 Declare secrets inline in the cluster config. Impeller will create or update each secret using `kubectl apply` after the release is deployed.
@@ -102,8 +83,6 @@ releases:
     chartPath: stable/sample-server
     waitforDeployment:
       - sample-server
-    shell:
-      - kubectl label namespace kube-system team=platform --overwrite
     secrets:
       - name: app-credentials
         data:
