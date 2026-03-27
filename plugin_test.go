@@ -157,7 +157,7 @@ func TestApplySecretsSkipsOnDryrun(t *testing.T) {
 	release := &types.Release{
 		Secrets: []types.Secret{{
 			Name: "my-secret",
-			Data: map[string]string{"key": "value"},
+			Data: map[string]string{"key": "MY_VALUE_ENV"},
 		}},
 	}
 
@@ -170,7 +170,7 @@ func TestApplySecretsSkipsOnDiffrun(t *testing.T) {
 	release := &types.Release{
 		Secrets: []types.Secret{{
 			Name: "my-secret",
-			Data: map[string]string{"key": "value"},
+			Data: map[string]string{"key": "MY_VALUE_ENV"},
 		}},
 	}
 
@@ -193,7 +193,7 @@ func TestApplySecretsRequiresEnvironmentVariables(t *testing.T) {
 		Name: "test-release",
 		Secrets: []types.Secret{{
 			Name: "my-secret",
-			Data: map[string]string{"password": "MISSING_ENV_VAR_FOR_TEST"},
+			Data: map[string]string{"password": "MISSING_ENV_VAR_ENV"},
 		}},
 	}
 
@@ -202,7 +202,7 @@ func TestApplySecretsRequiresEnvironmentVariables(t *testing.T) {
 	assert.Contains(t, err.Error(), "requires environment variable")
 }
 
-func TestApplySecretsRejectsPlainTextSecretValue(t *testing.T) {
+func TestApplySecretsRejectsValueWithoutENVSuffix(t *testing.T) {
 	p := &Plugin{}
 	release := &types.Release{
 		Name: "test-release",
@@ -214,8 +214,24 @@ func TestApplySecretsRejectsPlainTextSecretValue(t *testing.T) {
 
 	err := p.applySecrets(release)
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "requires environment variable")
-	assert.Contains(t, err.Error(), "my-plain-text-password")
+	assert.Contains(t, err.Error(), "must be an environment variable name ending with _ENV")
+}
+
+func TestApplySecretsRejectsValueWithoutENVSuffixVariants(t *testing.T) {
+	invalidValues := []string{"MY_SECRET", "mysecret", "SECRET_VAR", "VALUE_ENVX", "plain text"}
+	for _, v := range invalidValues {
+		p := &Plugin{}
+		release := &types.Release{
+			Name: "test-release",
+			Secrets: []types.Secret{{
+				Name: "my-secret",
+				Data: map[string]string{"key": v},
+			}},
+		}
+		err := p.applySecrets(release)
+		require.Errorf(t, err, "expected error for value %q", v)
+		assert.Contains(t, err.Error(), "must be an environment variable name ending with _ENV")
+	}
 }
 
 func TestIsBase64Encoded(t *testing.T) {

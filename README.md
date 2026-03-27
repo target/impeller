@@ -68,26 +68,8 @@ releases:
       - name: app-credentials
         namespace: kube-system   # optional; defaults to release namespace
         data:
-          username: APP_USERNAME  # read from $APP_USERNAME
-          password: MY_PASSWORD   # read from $MY_PASSWORD
-```
-
-Example:
-
-```yaml
-name: cluster1-lab
-releases:
-  - name: sample-server
-    namespace: kube-system
-    version: 3.9.0
-    chartPath: stable/sample-server
-    waitforDeployment:
-      - sample-server
-    secrets:
-      - name: app-credentials
-        data:
-          username: APP_USERNAME
-          password: APP_PASSWORD   # read from $APP_PASSWORD
+          username: APP_USERNAME_ENV  # read from $APP_USERNAME_ENV
+          password: MY_PASSWORD_ENV   # read from $MY_PASSWORD_ENV
 ```
 
 ### Other features

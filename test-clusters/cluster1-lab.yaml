@@ -15,8 +15,8 @@ releases:
       - name: hello-world
         namespace: kube-system
         data:
-          key1: MYSECRET
-          key2: MYSECRET2
+          key1: MYSECRET_ENV
+          key2: MYSECRET2_ENV
   - name: sample-ingress
     namespace: kube-system
     version: 3.9.3

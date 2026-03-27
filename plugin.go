@@ -575,6 +575,9 @@ func (p *Plugin) applySecrets(release *types.Release) error {
 			if envVarName == "" {
 				return fmt.Errorf("secret %q key %q has empty environment variable name", secret.Name, key)
 			}
+			if !strings.HasSuffix(envVarName, "_ENV") {
+				return fmt.Errorf("secret %q key %q: value %q must be an environment variable name ending with _ENV", secret.Name, key, envVarName)
+			}
 
 			value, isSet := os.LookupEnv(envVarName)
 			if !isSet {
