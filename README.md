@@ -55,7 +55,8 @@ Declare secrets inline in the cluster config. Impeller will create or update eac
 * Secrets are skipped automatically on `--dry-run` and `--diff-run`.
 * `namespace` on each secret is optional; when omitted the release `namespace` is used.
 * Data values must be environment variable names. Impeller resolves each key from that environment variable and fails if any variable is missing or empty.
-* If an environment value is already base64-encoded, it is preserved as-is; otherwise Kubernetes encodes it from `stringData`.
+* If an environment value is already base64-encoded, it is preserved as-is; otherwise Kubernetes encodes it from `stringData`
+* **Note:** The environment variable should be suffixed with`_ENV` and plain text is not accepted.
 
 ```yaml
 name: cluster1-lab
