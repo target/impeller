@@ -11,8 +11,6 @@ releases:
     kubectlFiles:
       - sample-server.yaml
       - sample-server
-    shell:
-      - kubectl create secrets hello-world --from-literal=hello=world -n kube-system
     secrets:
       - name: hello-world
         namespace: kube-system
