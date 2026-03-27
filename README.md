@@ -48,6 +48,31 @@ releases:
       - sample-server-lab
 ```
 
+### Kubernetes secret management (Optional feature)
+
+Declare secrets inline in the cluster config. Impeller will create or update each secret using `kubectl apply` after the release is deployed.
+
+* Secrets are skipped automatically on `--dry-run` and `--diff-run`.
+* `namespace` on each secret is optional; when omitted the release `namespace` is used.
+* Data values must be environment variable names. Impeller resolves each key from that environment variable and fails if any variable is missing or empty.
+* If an environment value is already base64-encoded, it is preserved as-is; otherwise Kubernetes encodes it from `stringData`
+* **Note:** The environment variable should be suffixed with`_ENV` and plain text is not accepted.
+
+```yaml
+name: cluster1-lab
+releases:
+  - name: sample-server
+    namespace: kube-system
+    version: 3.9.0
+    chartPath: stable/sample-server
+    secrets:
+      - name: app-credentials
+        namespace: kube-system   # optional; defaults to release namespace
+        data:
+          username: APP_USERNAME_ENV  # read from $APP_USERNAME_ENV
+          password: MY_PASSWORD_ENV   # read from $MY_PASSWORD_ENV
+```
+
 ### Other features
 * Use it as a [Drone](https://drone.io/) plugin for CI/CD.
 * Read secrets from environment variables.

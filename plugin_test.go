@@ -151,3 +151,92 @@ func TestWaitForResourcesSkipsOnDiffrun(t *testing.T) {
 	err := p.waitForResources(release)
 	require.NoError(t, err)
 }
+
+func TestApplySecretsSkipsOnDryrun(t *testing.T) {
+	p := &Plugin{Dryrun: true}
+	release := &types.Release{
+		Secrets: []types.Secret{{
+			Name: "my-secret",
+			Data: map[string]string{"key": "MY_VALUE_ENV"},
+		}},
+	}
+
+	err := p.applySecrets(release)
+	require.NoError(t, err)
+}
+
+func TestApplySecretsSkipsOnDiffrun(t *testing.T) {
+	p := &Plugin{Diffrun: true}
+	release := &types.Release{
+		Secrets: []types.Secret{{
+			Name: "my-secret",
+			Data: map[string]string{"key": "MY_VALUE_ENV"},
+		}},
+	}
+
+	err := p.applySecrets(release)
+	require.NoError(t, err)
+}
+
+func TestApplySecretsValidation(t *testing.T) {
+	p := &Plugin{}
+	release := &types.Release{Name: "test-release", Secrets: []types.Secret{{}}}
+
+	err := p.applySecrets(release)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "secret name cannot be empty")
+}
+
+func TestApplySecretsRequiresEnvironmentVariables(t *testing.T) {
+	p := &Plugin{}
+	release := &types.Release{
+		Name: "test-release",
+		Secrets: []types.Secret{{
+			Name: "my-secret",
+			Data: map[string]string{"password": "MISSING_ENV_VAR_ENV"},
+		}},
+	}
+
+	err := p.applySecrets(release)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "requires environment variable")
+}
+
+func TestApplySecretsRejectsValueWithoutENVSuffix(t *testing.T) {
+	p := &Plugin{}
+	release := &types.Release{
+		Name: "test-release",
+		Secrets: []types.Secret{{
+			Name: "my-secret",
+			Data: map[string]string{"password": "my-plain-text-password"},
+		}},
+	}
+
+	err := p.applySecrets(release)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "must be an environment variable name ending with _ENV")
+}
+
+func TestApplySecretsRejectsValueWithoutENVSuffixVariants(t *testing.T) {
+	invalidValues := []string{"MY_SECRET", "mysecret", "SECRET_VAR", "VALUE_ENVX", "plain text"}
+	for _, v := range invalidValues {
+		p := &Plugin{}
+		release := &types.Release{
+			Name: "test-release",
+			Secrets: []types.Secret{{
+				Name: "my-secret",
+				Data: map[string]string{"key": v},
+			}},
+		}
+		err := p.applySecrets(release)
+		require.Errorf(t, err, "expected error for value %q", v)
+		assert.Contains(t, err.Error(), "must be an environment variable name ending with _ENV")
+	}
+}
+
+func TestIsBase64Encoded(t *testing.T) {
+	assert.True(t, isBase64Encoded("aGVsbG8="))
+	assert.True(t, isBase64Encoded("aGVsbG8"))
+	assert.False(t, isBase64Encoded("hello"))
+	assert.False(t, isBase64Encoded(""))
+}

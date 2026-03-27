@@ -39,3 +39,15 @@ func TestReadConfigWithChartOverrides(t *testing.T) {
 	require.Nil(t, err)
 	assert.Equal(t, "12.12.12.0/24 12.0.0.0/4 cluster.local", overrideValue)
 }
+
+func TestReadConfigWithSecrets(t *testing.T) {
+	config, err := ReadClusterConfig("./tests/sample_config_shell_and_secrets.yaml")
+	require.Nil(t, err)
+	require.Len(t, config.Releases, 1)
+
+	release := config.Releases[0]
+	require.Len(t, release.Secrets, 1)
+	assert.Equal(t, "app-secret", release.Secrets[0].Name)
+	assert.Equal(t, "USERNAME_ENV", release.Secrets[0].Data["username"])
+	assert.Equal(t, "PASSWORD_ENV", release.Secrets[0].Data["password"])
+}
