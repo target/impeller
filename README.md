@@ -73,7 +73,8 @@ Declare secrets inline in the cluster config. Impeller will create or update eac
 
 * Secrets are skipped automatically on `--dry-run` and `--diff-run`.
 * `namespace` on each secret is optional; when omitted the release `namespace` is used.
-* Data values are treated as literal strings. If a value matches the name of a set environment variable, the environment variable's value is used instead — this keeps sensitive values out of source control.
+* Data values must be environment variable names. Impeller resolves each key from that environment variable and fails if any variable is missing or empty.
+* If an environment value is already base64-encoded, it is preserved as-is; otherwise Kubernetes encodes it from `stringData`.
 
 ```yaml
 name: cluster1-lab
@@ -86,11 +87,11 @@ releases:
       - name: app-credentials
         namespace: kube-system   # optional; defaults to release namespace
         data:
-          username: myuser        # literal value
-          password: MY_PASSWORD   # resolved from $MY_PASSWORD env var if set
+          username: APP_USERNAME  # read from $APP_USERNAME
+          password: MY_PASSWORD   # read from $MY_PASSWORD
 ```
 
-Full example combining both features:
+Example:
 
 ```yaml
 name: cluster1-lab
@@ -106,8 +107,8 @@ releases:
     secrets:
       - name: app-credentials
         data:
-          username: myuser
-          password: APP_PASSWORD   # resolved from $APP_PASSWORD env var
+          username: APP_USERNAME
+          password: APP_PASSWORD   # read from $APP_PASSWORD
 ```
 
 ### Other features

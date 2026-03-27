@@ -193,11 +193,6 @@ func (p *Plugin) installAddon(release *types.Release) error {
 		return err
 	}
 
-	// Run optional post-deploy shell commands.
-	if err := p.runShellCommands(release); err != nil {
-		return err
-	}
-
 	return nil
 }
 
@@ -575,10 +570,18 @@ func (p *Plugin) applySecrets(release *types.Release) error {
 		secretData := map[string]string{}
 		secretStringData := map[string]string{}
 
-		for key, rawValue := range secret.Data {
-			value := rawValue
-			if envValue, isSet := os.LookupEnv(rawValue); isSet {
-				value = envValue
+		for key, envVarName := range secret.Data {
+			envVarName = strings.TrimSpace(envVarName)
+			if envVarName == "" {
+				return fmt.Errorf("secret %q key %q has empty environment variable name", secret.Name, key)
+			}
+
+			value, isSet := os.LookupEnv(envVarName)
+			if !isSet {
+				return fmt.Errorf("secret %q key %q requires environment variable %q to be set", secret.Name, key, envVarName)
+			}
+			if strings.TrimSpace(value) == "" {
+				return fmt.Errorf("secret %q key %q resolved empty value from environment variable %q", secret.Name, key, envVarName)
 			}
 
 			if isBase64Encoded(value) {
@@ -651,25 +654,6 @@ func isBase64Encoded(value string) bool {
 	}
 
 	return false
-}
-
-func (p *Plugin) runShellCommands(release *types.Release) error {
-	if p.Dryrun || p.Diffrun || len(release.Shell) == 0 {
-		return nil
-	}
-
-	for _, cmdStr := range release.Shell {
-		if strings.TrimSpace(cmdStr) == "" {
-			continue
-		}
-
-		cmd := exec.Command("sh", "-c", cmdStr)
-		if err := utils.Run(cmd, false); err != nil {
-			return fmt.Errorf("error running shell command %q: %v", cmdStr, err)
-		}
-	}
-
-	return nil
 }
 
 func (p *Plugin) fetchChart(release *types.Release) error {

@@ -35,10 +35,9 @@ type Release struct {
 	WaitforDeployment  []string   `yaml:"waitforDeployment,omitempty"`
 	WaitforDaemonSet   []string   `yaml:"waitforDaemonSet,omitempty"`
 	WaitforStatefulSet []string   `yaml:"waitforStatefulSet,omitempty"`
-	KubectlFiles       []string   `yaml:"kubectlFiles,omitempty"`
-	Shell              []string   `yaml:"shell,omitempty"`
-	Secrets            []Secret   `yaml:"secrets,omitempty"`
-	Force              bool       `yaml:"force,omitempty"`
+	KubectlFiles []string   `yaml:"kubectlFiles,omitempty"`
+	Secrets      []Secret   `yaml:"secrets,omitempty"`
+	Force        bool       `yaml:"force,omitempty"`
 }
 
 type Secret struct {

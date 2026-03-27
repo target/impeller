@@ -178,22 +178,6 @@ func TestApplySecretsSkipsOnDiffrun(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestRunShellCommandsSkipsOnDryrun(t *testing.T) {
-	p := &Plugin{Dryrun: true}
-	release := &types.Release{Shell: []string{"echo hello"}}
-
-	err := p.runShellCommands(release)
-	require.NoError(t, err)
-}
-
-func TestRunShellCommandsSkipsOnDiffrun(t *testing.T) {
-	p := &Plugin{Diffrun: true}
-	release := &types.Release{Shell: []string{"echo hello"}}
-
-	err := p.runShellCommands(release)
-	require.NoError(t, err)
-}
-
 func TestApplySecretsValidation(t *testing.T) {
 	p := &Plugin{}
 	release := &types.Release{Name: "test-release", Secrets: []types.Secret{{}}}
@@ -201,6 +185,21 @@ func TestApplySecretsValidation(t *testing.T) {
 	err := p.applySecrets(release)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "secret name cannot be empty")
+}
+
+func TestApplySecretsRequiresEnvironmentVariables(t *testing.T) {
+	p := &Plugin{}
+	release := &types.Release{
+		Name: "test-release",
+		Secrets: []types.Secret{{
+			Name: "my-secret",
+			Data: map[string]string{"password": "MISSING_ENV_VAR_FOR_TEST"},
+		}},
+	}
+
+	err := p.applySecrets(release)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "requires environment variable")
 }
 
 func TestIsBase64Encoded(t *testing.T) {
