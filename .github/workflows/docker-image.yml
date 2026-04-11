@@ -28,7 +28,7 @@ jobs:
             prefix=
             suffix=
       - name: Build and push Docker image
-        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83
+        uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f
         with:
           context: .
           file: ./Dockerfile
@@ -47,7 +47,7 @@ jobs:
             suffix=gcloud
 
       - name: Build and push Docker image gcloud
-        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83
+        uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f
         with:
           context: .
           file: ./Dockerfile-gcloud
