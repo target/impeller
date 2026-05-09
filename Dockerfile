@@ -1,4 +1,4 @@
-FROM golang:1.26.1-alpine as builder
+FROM golang:1.26.3-alpine as builder
 ENV DESIRED_VERSION=v3.19.0
 ENV HELM_DIFF_VERSION=v3.13.0
 WORKDIR /go/src/github.com/target/impeller
