@@ -208,6 +208,11 @@ func (p *Plugin) installAddonViaHelm(release *types.Release) error {
 	} else {
 		cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: "upgrade"})
 		cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: "--install"})
+		cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: "--server-side"})
+		if release.ForceConflicts {
+			log.Println("ForceConflicts flag enabled: will force field ownership conflicts in server-side apply")
+			cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: "--force-conflicts"})
+		}
 		if release.History > 0 {
 			cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeLongParam, Name: "history-max", Value: fmt.Sprint(release.History)})
 		} else if p.ClusterConfig.Helm.DefaultHistory > 0 {
@@ -216,7 +221,7 @@ func (p *Plugin) installAddonViaHelm(release *types.Release) error {
 		// Force recreate resources if immutable fields change
 		if release.Force {
 			log.Println("Force flag enabled: will recreate resources with immutable field changes")
-			cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: "--force"})
+			cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: "--force-replace"})
 		}
 	}
 	cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: release.Name})
