@@ -1,6 +1,6 @@
 FROM golang:1.26.5-alpine as builder
-ENV DESIRED_VERSION=v3.19.0
-ENV HELM_DIFF_VERSION=v3.13.0
+ENV DESIRED_VERSION=v4.2.2
+ENV HELM_DIFF_VERSION=v3.15.10
 WORKDIR /go/src/github.com/target/impeller
 COPY . .
 ENV GO111MODULE=on
@@ -13,12 +13,15 @@ RUN apk add --no-cache git && \
 RUN apk add --update openssl && \
     rm -rf /var/cache/apk/*
 RUN apk update && apk add bash git openssh
-RUN apk add ca-certificates
+RUN apk add ca-certificates curl gpg gpg-agent
 RUN cd /tmp && \
-    wget -O get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 \
+    wget -O get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-4 \
     && chmod +x get_helm.sh \
     && ./get_helm.sh
-RUN /usr/local/bin/helm plugin install https://github.com/databus23/helm-diff --version ${HELM_DIFF_VERSION}
+RUN curl -sL https://github.com/databus23.gpg | gpg --import
+RUN gpgconf --kill all
+RUN gpg --output ~/.gnupg/pubring.gpg --export
+RUN helm plugin install https://github.com/databus23/helm-diff/releases/download/${HELM_DIFF_VERSION}/helm-diff-linux-amd64.tgz
 
 FROM gcr.io/google.com/cloudsdktool/google-cloud-cli:alpine as gcloud
 RUN gcloud components install gke-gcloud-auth-plugin

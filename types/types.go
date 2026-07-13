@@ -37,7 +37,8 @@ type Release struct {
 	WaitforStatefulSet []string   `yaml:"waitforStatefulSet,omitempty"`
 	KubectlFiles []string   `yaml:"kubectlFiles,omitempty"`
 	Secrets      []Secret   `yaml:"secrets,omitempty"`
-	Force        bool       `yaml:"force,omitempty"`
+	Force          bool       `yaml:"force,omitempty"`
+	ForceConflicts bool       `yaml:"forceConflicts,omitempty"`
 }
 
 type Secret struct {
