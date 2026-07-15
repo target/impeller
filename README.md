@@ -211,6 +211,7 @@ releases:
     version: 0.7.0  # Specify the version of the chart to install
     deploymentMethod: helm # Specify how the chart should be installed ("helm" or "kubectl")
     history: 3  # Optional; sets the --history-max flag for the "helm" deployment method for this release
+    forceConflicts: true  # Optional; forces field ownership conflicts in server-side apply (helm deploymentMethod only)
   - name: my-chart
     chartPath: private-repo/my-chart
     namespace: kube-system

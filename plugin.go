@@ -205,6 +205,7 @@ func (p *Plugin) installAddonViaHelm(release *types.Release) error {
 		cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: "upgrade"})
 		cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: "--allow-unreleased"})
 		cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: "--suppress-secrets"})
+		cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: "--server-side=true"})
 	} else {
 		cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: "upgrade"})
 		cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: "--install"})
