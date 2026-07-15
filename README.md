@@ -7,6 +7,12 @@ Manages Helm charts running in Kubernetes clusters.
 [![Latest Release](https://img.shields.io/github/release/target/impeller.svg)](https://github.com/target/impeller/releases)
 [![MIT License](https://img.shields.io/github/license/target/impeller.svg)](https://github.com/target/impeller/blob/master/LICENSE)
 
+## Helm Version
+
+As of v3.6.0, impeller uses **Helm 4**. Helm 3 is only supported in versions prior to 3.6.0.
+
+All Helm-based deployments now use server-side apply (`--server-side`), including `helm diff` runs.
+
 ## Use Cases
 ### Managing multiple Helm charts
 * Use declarative configurations to specify the versions of Helm charts running in your cluster.
@@ -211,6 +217,7 @@ releases:
     version: 0.7.0  # Specify the version of the chart to install
     deploymentMethod: helm # Specify how the chart should be installed ("helm" or "kubectl")
     history: 3  # Optional; sets the --history-max flag for the "helm" deployment method for this release
+    forceConflicts: true  # Optional; forces field ownership conflicts in server-side apply (helm deploymentMethod only)
   - name: my-chart
     chartPath: private-repo/my-chart
     namespace: kube-system
