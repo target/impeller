@@ -209,7 +209,7 @@ func (p *Plugin) installAddonViaHelm(release *types.Release) error {
 	} else {
 		cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: "upgrade"})
 		cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: "--install"})
-		cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: "--server-side"})
+		cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: "--server-side=true"})
 		if release.ForceConflicts {
 			log.Println("ForceConflicts flag enabled: will force field ownership conflicts in server-side apply")
 			cb.Add(commandbuilder.Arg{Type: commandbuilder.ArgTypeRaw, Value: "--force-conflicts"})
