@@ -11,7 +11,7 @@ Manages Helm charts running in Kubernetes clusters.
 
 As of v3.6.0, impeller uses **Helm 4**. Helm 3 is only supported in versions prior to 3.6.0.
 
-All Helm-based deployments now use server-side apply (`--server-side`), including `helm diff` runs.
+All Helm-based deployments now use server-side apply (`--server-side=true`), including `helm diff` runs.
 
 ## Use Cases
 ### Managing multiple Helm charts
