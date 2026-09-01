@@ -1,4 +1,4 @@
-FROM golang:1.26.5-alpine as builder
+FROM golang:1.26.5-alpine AS builder
 ENV DESIRED_VERSION=v4.2.2
 ENV HELM_DIFF_VERSION=v3.15.10
 WORKDIR /go/src/github.com/target/impeller
@@ -20,10 +20,13 @@ RUN cd /tmp && \
     && ./get_helm.sh
 RUN curl -sL https://github.com/databus23.gpg | gpg --import
 RUN gpgconf --kill all
+RUN rm ~/.gnupg/*.lock || echo "no locks found"
+RUN rm -f ~/.gnupg/public-keys.d/pubring.db.lock || echo "pubring.db.lock not found"
+RUN gpgconf --reload gpg-agent
 RUN gpg --output ~/.gnupg/pubring.gpg --export
 RUN helm plugin install https://github.com/databus23/helm-diff/releases/download/${HELM_DIFF_VERSION}/helm-diff-linux-amd64.tgz
 
-FROM gcr.io/google.com/cloudsdktool/google-cloud-cli:alpine as gcloud
+FROM gcr.io/google.com/cloudsdktool/google-cloud-cli:alpine AS gcloud
 RUN gcloud components install gke-gcloud-auth-plugin
 
 
