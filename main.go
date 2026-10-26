@@ -49,7 +49,7 @@ func main() {
 		},
 		cli.BoolFlag{
 			Name:   "diff-run",
-			Usage:  "compares upgrade changes deployment",
+			Usage:  "compares upgrade changes for deployment",
 			EnvVar: "DIFF_RUN,PLUGIN_DIFF_RUN,PARAMETER_DIFF_RUN",
 		},
 		cli.BoolFlag{
